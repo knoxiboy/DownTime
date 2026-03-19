@@ -1,0 +1,69 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build artifacts
+.next/
+dist/
+build/
+out/
+.docusaurus/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Prisma
+/backend/prisma/migrations/
+/backend/prisma/generated/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs (npm/pnpm/yarn)
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Other
+build_output*.txt
+.gemini/
+.system_generated/
+.agents/
+.agent/
+_agents/
+_agent/
+brain/
+tmp/
