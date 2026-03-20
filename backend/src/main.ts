@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
+  console.log('DEBUG: DATABASE_URL is:', process.env.DATABASE_URL);
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS for frontend

@@ -18,7 +18,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
   imports: [
     ConfigModule.forRoot({ 
       isGlobal: true,
-      envFilePath: '../.env'
+      envFilePath: ['.env', '../.env', '.env.local']
     }),
     ScheduleModule.forRoot(),
     HttpModule,

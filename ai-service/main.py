@@ -210,3 +210,6 @@ def calculate_risk(req: RiskRequest) -> RiskResponse:
         historical_risk=historical_risk,
         risk_label=risk_label,
     )
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
