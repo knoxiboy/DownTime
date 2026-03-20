@@ -12,7 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Clock, Zap } from "lucide-react";
+import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap } from "lucide-react";
 import { api } from "@/lib/axios";
 
 interface PremiumResponse {
@@ -38,9 +38,26 @@ interface WorkerProfile {
   dailyIncome: number;
 }
 
+interface Policy {
+  id: string;
+  workerId: string;
+  coveragePct: number;
+  weeklyPremium: number;
+  startDate: string;
+  status: string;
+}
+
+interface Claim {
+  id: string;
+  policyId: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
+
 interface DashboardData {
-  activePolicy: any;
-  claims: any[];
+  activePolicy: Policy | null;
+  claims: Claim[];
   worker: WorkerProfile;
   stats: {
     totalPayouts: number;
