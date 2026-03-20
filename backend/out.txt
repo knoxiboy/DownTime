@@ -1,0 +1,7 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-gentle-resonance-amyt7r03-pooler.c-5.us-east-1.aws.neon.tech"
+
+Error: P1001: Can't reach database server at `ep-gentle-resonance-amyt7r03-pooler.c-5.us-east-1.aws.neon.tech:5432`
+
+Please make sure your database server is running at `ep-gentle-resonance-amyt7r03-pooler.c-5.us-east-1.aws.neon.tech:5432`.
