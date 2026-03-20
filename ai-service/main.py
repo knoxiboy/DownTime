@@ -6,7 +6,7 @@ from typing import Optional
 import math
 
 app = FastAPI(
-    title="GigShield AI Risk Engine",
+    title="DownTime AI Risk Engine",
     description="AI-powered risk calculation service for parametric income protection",
     version="1.0.0",
 )
@@ -172,7 +172,7 @@ class RiskResponse(BaseModel):
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "service": "gigshield-ai-risk-engine"}
+    return {"status": "healthy", "service": "downtime-ai-risk-engine"}
 
 
 @app.post("/risk/calculate", response_model=RiskResponse)

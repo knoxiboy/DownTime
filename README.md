@@ -1,4 +1,4 @@
-# GigShield — AI-Powered Parametric Income Protection
+# DownTime — AI-Powered Parametric Income Protection
 
 ## The Problem
 Urban delivery gig workers lose roughly 20–25% of their monthly income to unpredictable external disruptions like torrential monsoon rains, extreme heat waves, or unannounced area curfews. Traditional insurance completely fails them, offering zero protection for lost working hours and requiring complex, manual claims processes they don't have time for.

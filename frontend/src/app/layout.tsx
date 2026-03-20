@@ -5,7 +5,7 @@ import './globals.css';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'GigShield — AI Parametric Income Protection',
+  title: 'DownTime — AI Parametric Income Protection',
   description: 'AI-powered parametric income protection engine for delivery gig workers.',
 };
 

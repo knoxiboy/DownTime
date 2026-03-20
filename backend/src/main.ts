@@ -23,6 +23,6 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3001;
   await app.listen(port);
-  console.log(`🚀 GigShield Backend running on http://localhost:${port}`);
+  console.log(`🚀 DownTime Backend running on http://localhost:${port}`);
 }
 bootstrap();

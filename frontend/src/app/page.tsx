@@ -12,7 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle } from "lucide-react";
+import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Clock, Zap } from "lucide-react";
 import { api } from "@/lib/axios";
 
 interface PremiumResponse {
@@ -28,6 +28,27 @@ interface PremiumResponse {
   };
 }
 
+interface WorkerProfile {
+  id: string;
+  name: string;
+  phone: string;
+  city: string;
+  zone: string;
+  platform: string;
+  dailyIncome: number;
+}
+
+interface DashboardData {
+  activePolicy: any;
+  claims: any[];
+  worker: WorkerProfile;
+  stats: {
+    totalPayouts: number;
+    protectedDays: number;
+    activeTriggers: number;
+  };
+}
+
 // Constants
 const CITIES: Record<string, string[]> = {
   hyderabad: ["Kondapur", "Hitech City", "Secunderabad", "Gachibowli"],
@@ -36,7 +57,11 @@ const CITIES: Record<string, string[]> = {
   delhi: ["Connaught Place", "Dwarka", "Rohini"],
 };
 
+// Seeded Worker ID for mock-auth
+const DEFAULT_WORKER_ID = "user-seed-123";
+
 export default function Home() {
+  const [view, setView] = useState<"quote" | "success" | "dashboard" | "profile">("quote");
   const [dailyIncome, setDailyIncome] = useState([700]);
   const [city, setCity] = useState("hyderabad");
   const [zone, setZone] = useState("Kondapur");
@@ -44,7 +69,7 @@ export default function Home() {
 
   const [loading, setLoading] = useState(false);
   const [premiumData, setPremiumData] = useState<PremiumResponse | null>(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
 
   // Auto update zone when city changes
   useEffect(() => {
@@ -53,6 +78,8 @@ export default function Home() {
 
   // Fetch premium calculation
   useEffect(() => {
+    if (view !== "quote") return;
+
     const fetchPremium = async () => {
       setLoading(true);
       try {
@@ -77,18 +104,90 @@ export default function Home() {
     }, 500); // 500ms debounce
 
     return () => clearTimeout(delay);
-  }, [dailyIncome, city, zone, coveragePct]);
+  }, [dailyIncome, city, zone, coveragePct, view]);
+
+  // Fetch dashboard data
+  const fetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/api/dashboard/worker/${DEFAULT_WORKER_ID}`);
+      setDashboardData(response.data);
+    } catch (err) {
+      console.error("Failed to fetch dashboard", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (view === "dashboard" || view === "profile") {
+      fetchDashboard();
+    }
+  }, [view]);
 
   const handlePurchase = async () => {
     setLoading(true);
-    // Simulate backend call to purchase policy
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      // Real backend call to create policy
+      await api.post("/api/policies", {
+        workerId: DEFAULT_WORKER_ID,
+        coveragePct: Number(coveragePct),
+      });
       setIsSuccess(true);
-    }, 1500);
+      setView("success");
+    } catch (err) {
+      console.error("Failed to purchase policy", err);
+      alert("Failed to activate policy. Please make sure the backend is running.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (isSuccess) {
+  const setIsSuccess = (val: boolean) => {
+    if (!val) setView("quote");
+  };
+
+  const renderNavbar = () => (
+    <nav className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
+      <div 
+        className="flex items-center gap-2 cursor-pointer" 
+        onClick={() => setView("quote")}
+      >
+        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+          <Shield className="w-5 h-5 text-white" />
+        </div>
+        <span className="text-xl font-bold tracking-tight text-white">DownTime</span>
+      </div>
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`rounded-full gap-2 ${view === 'quote' ? 'bg-white/10 text-white' : 'text-slate-400'}`}
+          onClick={() => setView("quote")}
+        >
+          <HomeIcon className="w-4 h-4" /> <span className="hidden sm:inline">Home</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`rounded-full gap-2 ${view === 'dashboard' ? 'bg-white/10 text-white' : 'text-slate-400'}`}
+          onClick={() => setView("dashboard")}
+        >
+          <Activity className="w-4 h-4" /> <span className="hidden sm:inline">Dashboard</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`rounded-full gap-2 ${view === 'profile' ? 'bg-white/10 text-white' : 'text-slate-400'}`}
+          onClick={() => setView("profile")}
+        >
+          <User className="w-4 h-4" /> <span className="hidden sm:inline">Profile</span>
+        </Button>
+      </div>
+    </nav>
+  );
+
+  if (view === "success") {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-6 ring-4 ring-green-500/30">
@@ -98,7 +197,7 @@ export default function Home() {
           You are Covered!
         </h1>
         <p className="text-xl text-slate-300 max-w-md mx-auto mb-8">
-          Your GigShield policy is active. You are now protected against external disruptions.
+          Your DownTime policy is active. You are now protected against external disruptions.
         </p>
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md max-w-sm w-full mx-auto text-left space-y-3">
           <div className="flex justify-between">
@@ -118,25 +217,195 @@ export default function Home() {
           </div>
         </div>
         <Button 
-          className="mt-8 bg-white/10 hover:bg-white/20 text-white rounded-full px-8 py-6 h-auto text-lg border border-white/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_-5px_rgba(255,255,255,0.2)]"
-          onClick={() => setIsSuccess(false)}
+          className="mt-8 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-8 py-6 h-auto text-lg border border-white/10 transition-all duration-300 shadow-[0_0_30px_-5px_rgba(99,102,241,0.3)]"
+          onClick={() => setView("dashboard")}
         >
-          View Dashboard
+          Go to Dashboard
         </Button>
+      </div>
+    );
+  }
+
+  if (view === "dashboard") {
+    return (
+      <div className="py-6 animate-in fade-in duration-700">
+        {renderNavbar()}
+        
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Worker Dashboard</h1>
+          <p className="text-slate-400">Manage your policies and track instant payouts.</p>
+        </header>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+            <p className="text-slate-400 text-sm mb-1">Total Payouts</p>
+            <p className="text-3xl font-bold text-green-400">₹{dashboardData?.stats.totalPayouts || 0}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+            <p className="text-slate-400 text-sm mb-1">Protected Days</p>
+            <p className="text-3xl font-bold text-blue-400">{dashboardData?.stats.protectedDays || 0}</p>
+          </div>
+          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
+            <p className="text-slate-400 text-sm mb-1">Active Triggers</p>
+            <p className="text-3xl font-bold text-orange-400">{dashboardData?.stats.activeTriggers || 0}</p>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-[2fr_1fr] gap-8">
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <History className="w-5 h-5 text-indigo-400" /> Recent History
+            </h2>
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-white/5 text-slate-400 text-xs uppercase tracking-wider">
+                  <tr>
+                    <th className="px-6 py-4">Date</th>
+                    <th className="px-6 py-4">Event</th>
+                    <th className="px-6 py-4">Hours</th>
+                    <th className="px-6 py-4">Payout</th>
+                    <th className="px-6 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {dashboardData?.claims && dashboardData.claims.length > 0 ? (
+                    dashboardData.claims.map((claim) => (
+                      <tr key={claim.id} className="hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4 text-sm">{new Date(claim.eventDate).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-sm font-medium">{claim.triggerType}</td>
+                        <td className="px-6 py-4 text-sm">{claim.hoursLost}h</td>
+                        <td className="px-6 py-4 text-sm text-green-400 font-bold">₹{claim.finalPayout}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2 py-1 bg-green-500/10 text-green-400 text-[10px] font-bold rounded-md">
+                            {claim.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic">
+                        No recent claim history found. Go out and work safely!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Zap className="w-5 h-5 text-yellow-400" /> Active Policy
+            </h2>
+            {dashboardData?.activePolicy ? (
+              <div className="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Shield className="w-24 h-24" />
+                </div>
+                <div className="relative z-10">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <p className="text-xs text-indigo-300 font-bold uppercase mb-1">Weekly Limit</p>
+                      <p className="text-3xl font-bold">₹{dashboardData.activePolicy.coverageLimit}</p>
+                    </div>
+                    <span className="bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded">ACTIVE</span>
+                  </div>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-slate-400">Remaining</span>
+                      <span className="text-white font-medium">₹{dashboardData.activePolicy.remainingLimit}</span>
+                    </div>
+                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-indigo-500" 
+                        style={{ width: `${(dashboardData.activePolicy.remainingLimit / dashboardData.activePolicy.coverageLimit) * 100}%` }} 
+                      />
+                    </div>
+                  </div>
+                  <div className="text-[10px] text-slate-500 flex items-center justify-between border-t border-white/10 pt-4">
+                    <span>Coverage: {dashboardData.activePolicy.coveragePct * 100}%</span>
+                    <span>Expires: {new Date(dashboardData.activePolicy.weekEndDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white/5 border border-dashed border-white/20 p-8 rounded-2xl text-center">
+                <p className="text-slate-400 mb-4">No active policy found.</p>
+                <Button 
+                  size="sm" 
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white"
+                  onClick={() => setView("quote")}
+                >
+                  Get Covered Now
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "profile") {
+    return (
+      <div className="py-6 animate-in fade-in duration-700">
+        {renderNavbar()}
+
+        <header className="mb-12">
+          <h1 className="text-3xl font-bold text-white mb-2">My Profile</h1>
+          <p className="text-slate-400">Manage your account and work details.</p>
+        </header>
+
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div className="bg-white/5 border border-white/10 p-8 rounded-3xl flex items-center gap-8">
+            <div className="w-24 h-24 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-4xl font-bold shadow-lg shadow-indigo-500/20">
+              {dashboardData?.worker.name.charAt(0)}
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold mb-1">{dashboardData?.worker.name || "Loading..."}</h2>
+              <p className="text-indigo-400 font-medium">{dashboardData?.worker.platform.toUpperCase()} Partner</p>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            {[
+              { label: "Phone Number", val: dashboardData?.worker.phone, icon: Activity },
+              { label: "Operating City", val: dashboardData?.worker.city, icon: MapPin },
+              { label: "Base Zone", val: dashboardData?.worker.zone, icon: MapPin },
+              { label: "Daily Income", val: `₹${dashboardData?.worker.dailyIncome}`, icon: IndianRupee },
+            ].map((item, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl">
+                <p className="text-xs text-slate-500 font-bold uppercase mb-2 flex items-center gap-1.5">
+                  <item.icon className="w-3 h-3" /> {item.label}
+                </p>
+                <p className="text-lg font-medium text-white">{item.val || "---"}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-8 flex justify-center">
+            <Button variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-2">
+              <LogOut className="w-4 h-4" /> Sign Out
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="py-6 animate-in fade-in duration-700">
+      {renderNavbar()}
+      
       <header className="mb-12 text-center md:text-left md:flex justify-between items-end">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium border border-blue-500/20 mb-6">
-            <Shield className="w-4 h-4" />
-            AI-Powered Protection
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium border border-blue-500/20 mb-6 font-mono tracking-tight uppercase">
+            <Zap className="w-4 h-4" />
+            AI-Driven Parametric Engine v1.0
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 drop-shadow-sm">GigShield</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 drop-shadow-sm">DownTime</span>
           </h1>
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl font-light">
             Automated, parametric income protection that pays out instantly when weather or events disrupt your work.
@@ -327,11 +596,11 @@ export default function Home() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />
-                  Processing Engine...
+                  Finalizing Coverage...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  Activate GigShield <ChevronRight className="w-5 h-5 ml-1" />
+                  Activate DownTime <ChevronRight className="w-5 h-5 ml-1" />
                 </span>
               )}
             </Button>
