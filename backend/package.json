@@ -1,7 +1,7 @@
 {
   "name": "downtime-backend",
   "version": "1.0.0",
-  "description": "GigShield — AI-Powered Parametric Income Protection Backend",
+  "description": "DownTime — AI-Powered Parametric Income Protection Backend",
   "private": true,
   "scripts": {
     "build": "nest build",

@@ -1,4 +1,4 @@
-# Policy Model — GigShield Parametric Income Protection
+# Policy Model — DownTime Parametric Income Protection
 
 ## What Is Covered (ONLY this)
 

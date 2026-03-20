@@ -1,4 +1,4 @@
-# Risk Score Model — GigShield
+# Risk Score Model — DownTime
 
 ## Master Formula
 

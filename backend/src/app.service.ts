@@ -4,7 +4,7 @@ import { Injectable } from '@nestjs/common';
 export class AppService {
   getStatus() {
     return {
-      service: 'gigshield-backend',
+      service: 'downtime-backend',
       status: 'healthy',
       version: '1.0.0',
       timestamp: new Date().toISOString(),

@@ -25,14 +25,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
     }
     
-    // Final fallback for hackathon environment flakiness
-    const FALLBACK_URL = 'postgresql://neondb_owner:npg_prgXBvC3e6DM@ep-gentle-resonance-amyt7r03-pooler.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require';
-    const url = process.env.DATABASE_URL || FALLBACK_URL;
+    const url = process.env.DATABASE_URL;
     
-    console.log('PRISMA_SERVICE: Using DATABASE_URL:', !!process.env.DATABASE_URL ? 'FROM ENV' : 'FROM HARDCODED FALLBACK');
+    console.log('PRISMA_SERVICE: Using DATABASE_URL from environment variable.');
 
     super({
-
       datasources: {
         db: {
           url: url,
@@ -40,6 +37,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       },
       log: ['error', 'info', 'warn'],
     });
+
   }
 
   async onModuleInit() {

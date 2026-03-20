@@ -1,4 +1,4 @@
-# Parametric Triggers — GigShield
+# Parametric Triggers — DownTime
 
 ## 1. Trigger Rules (exact thresholds)
 

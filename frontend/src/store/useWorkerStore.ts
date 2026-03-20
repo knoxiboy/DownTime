@@ -26,7 +26,7 @@ export const useWorkerStore = create<WorkerState>()(
       clearWorker: () => set({ worker: null }),
     }),
     {
-      name: 'gigshield-worker-storage',
+      name: 'downtime-worker-storage',
     }
   )
 );

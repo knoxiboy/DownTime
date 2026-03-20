@@ -11,7 +11,7 @@ Urban delivery gig workers lose roughly 20–25% of their monthly income to unpr
 * Financial Impact: A single bad week with 3 rainy days drops his earnings by 30%, making him miss rent.
 
 ## Our Solution
-GigShield is an AI-powered parametric income protection engine that detects disruptions automatically and pays out instantly. No claims adjusters, no paperwork, no waiting. If a verified event happens in Ravi's zone and halts his work, the engine calculates his lost hours and triggers a direct UPI payout the same day.
+DownTime is an AI-powered parametric income protection engine that detects disruptions automatically and pays out instantly. No claims adjusters, no paperwork, no waiting. If a verified event happens in Ravi's zone and halts his work, the engine calculates his lost hours and triggers a direct UPI payout the same day.
 
 ## How Weekly Premium Works
 The weekly premium is dynamically calculated using this formula:

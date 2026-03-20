@@ -33,4 +33,4 @@
 
 **₹1,800–₹2,500** (20–25% of monthly earnings)
 
-This is the gap GigShield fills — automated, parametric income protection that pays out instantly when verified external events disrupt Ravi's ability to earn.
+This is the gap DownTime fills — automated, parametric income protection that pays out instantly when verified external events disrupt Ravi's ability to earn.

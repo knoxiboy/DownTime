@@ -1,4 +1,4 @@
-# Fraud Detection Rules — GigShield
+# Fraud Detection Rules — DownTime
 
 ## Rule 1: GPS / Location Validation
 
