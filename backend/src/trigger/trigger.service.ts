@@ -3,7 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import { ClaimsService } from '../claims/claims.service';
+import { ClaimService } from '../claims/claims.service';
 import { firstValueFrom } from 'rxjs';
 
 // Mock zone status data
@@ -33,8 +33,8 @@ export class TriggerService {
     private prisma: PrismaService,
     private http: HttpService,
     private config: ConfigService,
-    @Inject(forwardRef(() => ClaimsService))
-    private claimsService: ClaimsService,
+    @Inject(forwardRef(() => ClaimService))
+    private claimService: ClaimService,
   ) {}
 
   /**
@@ -91,7 +91,7 @@ export class TriggerService {
 
           for (const policy of affectedPolicies) {
             this.logger.log(`>> Creating Automated Claim for Policy: ${policy.id} (Worker: ${policy.worker.name})`);
-            await this.claimsService.createClaim({
+            await this.claimService.createClaim({
               policyId: policy.id,
               triggerType: weather.trigger_type,
               eventDate: new Date(),
