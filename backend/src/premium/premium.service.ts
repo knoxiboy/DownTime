@@ -1,9 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { RiskService } from '../risk/risk.service';
 
+// Actuarial constants
 const BASE_RATE = 0.025;
-const MIN_PREMIUM = 20;
-const MAX_PREMIUM = 500;
+const MIN_PREMIUM = 15;
+const MAX_PREMIUM = 600;
+
+// Seasonal adjustment multipliers (month -> multiplier)
+const SEASONAL_MULTIPLIER: Record<number, number> = {
+  1: 0.85, 2: 0.80, 3: 0.90, 4: 1.00, 5: 1.10,
+  6: 1.30, 7: 1.45, 8: 1.40, 9: 1.25, 10: 1.15,
+  11: 1.05, 12: 0.90,
+};
 
 export interface PremiumCalculation {
   weeklyIncome: number;
@@ -17,6 +25,20 @@ export interface PremiumCalculation {
     location_risk: number;
     seasonal_risk: number;
     historical_risk: number;
+    wind_risk: number;
+    humidity_risk: number;
+    uv_risk: number;
+    visibility_risk: number;
+    flood_risk: number;
+    cyclone_risk: number;
+    time_of_day_risk: number;
+  };
+  premiumBreakdown: {
+    baseComponent: number;
+    riskMultiplier: number;
+    seasonalAdjustment: number;
+    coverageFactor: number;
+    noclaimDiscount: number;
   };
 }
 
@@ -42,12 +64,29 @@ export class PremiumService {
     });
 
     const weeklyIncome = params.dailyIncome * 7;
-    const coverageLimit = weeklyIncome * params.coveragePct;
+    const coverageLimit = Math.round(weeklyIncome * params.coveragePct);
 
-    // Premium formula: coverage_limit × risk_score × base_rate
-    let weeklyPremium = coverageLimit * risk.risk_score * BASE_RATE;
+    // Actuarial Premium Calculation
+    // Step 1: Base component
+    const baseComponent = coverageLimit * BASE_RATE;
 
-    // Enforce bounds: ₹20 – ₹500
+    // Step 2: Risk multiplier (non-linear — higher risk = disproportionately higher premium)
+    const riskMultiplier = 1 + Math.pow(risk.risk_score, 1.5) * 2.5;
+
+    // Step 3: Seasonal adjustment
+    const month = new Date().getMonth() + 1;
+    const seasonalAdjustment = SEASONAL_MULTIPLIER[month] ?? 1.0;
+
+    // Step 4: Coverage factor (higher coverage % = slightly higher rate)
+    const coverageFactor = params.coveragePct <= 0.5 ? 0.90 : params.coveragePct <= 0.7 ? 1.0 : 1.15;
+
+    // Step 5: No-claim discount (simulated — in production, based on worker history)
+    const noclaimDiscount = 1.0; // 1.0 = no discount, 0.85 = 15% discount
+
+    // Final formula
+    let weeklyPremium = baseComponent * riskMultiplier * seasonalAdjustment * coverageFactor * noclaimDiscount;
+
+    // Enforce bounds
     weeklyPremium = Math.max(MIN_PREMIUM, Math.min(MAX_PREMIUM, weeklyPremium));
     weeklyPremium = Math.round(weeklyPremium * 100) / 100;
 
@@ -63,6 +102,20 @@ export class PremiumService {
         location_risk: risk.location_risk,
         seasonal_risk: risk.seasonal_risk,
         historical_risk: risk.historical_risk,
+        wind_risk: risk.wind_risk,
+        humidity_risk: risk.humidity_risk,
+        uv_risk: risk.uv_risk,
+        visibility_risk: risk.visibility_risk,
+        flood_risk: risk.flood_risk,
+        cyclone_risk: risk.cyclone_risk,
+        time_of_day_risk: risk.time_of_day_risk,
+      },
+      premiumBreakdown: {
+        baseComponent: Math.round(baseComponent * 100) / 100,
+        riskMultiplier: Math.round(riskMultiplier * 100) / 100,
+        seasonalAdjustment,
+        coverageFactor,
+        noclaimDiscount,
       },
     };
   }
