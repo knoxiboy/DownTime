@@ -12,7 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap } from "lucide-react";
+import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap, Wind, Droplets, Sun, Eye, Waves, CloudLightning, Thermometer, Clock } from "lucide-react";
 import { api } from "@/lib/axios";
 
 interface PremiumResponse {
@@ -25,6 +25,20 @@ interface PremiumResponse {
     location_risk: number;
     seasonal_risk: number;
     historical_risk: number;
+    wind_risk: number;
+    humidity_risk: number;
+    uv_risk: number;
+    visibility_risk: number;
+    flood_risk: number;
+    cyclone_risk: number;
+    time_of_day_risk: number;
+  };
+  premiumBreakdown: {
+    baseComponent: number;
+    riskMultiplier: number;
+    seasonalAdjustment: number;
+    coverageFactor: number;
+    noclaimDiscount: number;
   };
 }
 
@@ -71,12 +85,21 @@ interface DashboardData {
     city: string;
     zone: string;
     startTime: string;
+    value: number;
   };
   stats: {
     totalPayouts: number;
     protectedDays: number;
     activeTriggers: number;
+    coverageUtilization: number;
   };
+}
+
+interface AdminData {
+  activePolicies: number;
+  totalPremiumsThisWeek: number;
+  totalPayoutsThisWeek: number;
+  lossRatio: number;
 }
 
 // Constants
@@ -87,11 +110,26 @@ const CITIES: Record<string, string[]> = {
   delhi: ["Connaught Place", "Dwarka", "Rohini"],
 };
 
+const TRIGGER_LABELS: Record<string, string> = {
+  HEAVY_RAIN: "🌧️ Heavy Rain",
+  TORRENTIAL_RAIN: "🌊 Torrential Rain",
+  EXTREME_HEAT: "🔥 Extreme Heat",
+  HEAT_ADVISORY: "🌡️ Heat Advisory",
+  SEVERE_POLLUTION: "🏭 Severe Pollution",
+  POOR_AIR_QUALITY: "😷 Poor Air Quality",
+  HIGH_WIND: "💨 High Wind",
+  WIND_ADVISORY: "🌬️ Wind Advisory",
+  LOW_VISIBILITY: "🌫️ Low Visibility",
+  FLOOD_WARNING: "🌊 Flood Warning",
+  CYCLONE_ALERT: "🌀 Cyclone Alert",
+  HEAT_INDEX_DANGER: "🥵 Heat Index Danger",
+};
+
 // Seeded Worker ID for mock-auth
 const DEFAULT_WORKER_ID = "user-seed-123";
 
 export default function Home() {
-  const [view, setView] = useState<"quote" | "success" | "dashboard" | "profile">("quote");
+  const [view, setView] = useState<"quote" | "success" | "dashboard" | "profile" | "admin">("quote");
   const [dailyIncome, setDailyIncome] = useState([700]);
   const [city, setCity] = useState("hyderabad");
   const [zone, setZone] = useState("Kondapur");
@@ -100,6 +138,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [premiumData, setPremiumData] = useState<PremiumResponse | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [adminData, setAdminData] = useState<AdminData | null>(null);
 
   // Auto update zone when city changes
   useEffect(() => {
@@ -131,7 +170,7 @@ export default function Home() {
 
     const delay = setTimeout(() => {
       fetchPremium();
-    }, 500); // 500ms debounce
+    }, 500);
 
     return () => clearTimeout(delay);
   }, [dailyIncome, city, zone, coveragePct, view]);
@@ -152,18 +191,30 @@ export default function Home() {
   useEffect(() => {
     if (view === "dashboard" || view === "profile") {
       fetchDashboard();
+    } else if (view === "admin") {
+      const fetchAdminDashboard = async () => {
+        setLoading(true);
+        try {
+          const response = await api.get("/api/dashboard/admin");
+          // Re-use dashboard data state or create a separate one. Let's just create a new state variable next to dashboardData.
+          setAdminData(response.data);
+        } catch (err) {
+          console.error("Failed to fetch admin dashboard", err);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchAdminDashboard();
     }
   }, [view]);
 
   const handlePurchase = async () => {
     setLoading(true);
     try {
-      // Real backend call to create policy
       await api.post("/api/policies", {
         workerId: DEFAULT_WORKER_ID,
         coveragePct: Number(coveragePct),
       });
-      setIsSuccess(true);
       setView("success");
     } catch (err) {
       console.error("Failed to purchase policy", err);
@@ -173,26 +224,23 @@ export default function Home() {
     }
   };
 
-  const setIsSuccess = (val: boolean) => {
-    if (!val) setView("quote");
-  };
-
   const renderNavbar = () => (
     <nav className="flex items-center justify-between mb-8 pb-4 border-b border-white/5">
       <div 
         className="flex items-center gap-2 cursor-pointer" 
         onClick={() => setView("quote")}
       >
-        <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
+        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20 animate-pulse-ring">
           <Shield className="w-5 h-5 text-white" />
         </div>
         <span className="text-xl font-bold tracking-tight text-white">DownTime</span>
+        <span className="text-[9px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">v2.0</span>
       </div>
       <div className="flex items-center gap-4">
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`rounded-full gap-2 ${view === 'quote' ? 'bg-white/10 text-white' : 'text-slate-400'}`}
+          className={`rounded-full gap-2 transition-all ${view === 'quote' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
           onClick={() => setView("quote")}
         >
           <HomeIcon className="w-4 h-4" /> <span className="hidden sm:inline">Home</span>
@@ -200,7 +248,7 @@ export default function Home() {
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`rounded-full gap-2 ${view === 'dashboard' ? 'bg-white/10 text-white' : 'text-slate-400'}`}
+          className={`rounded-full gap-2 transition-all ${view === 'dashboard' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
           onClick={() => setView("dashboard")}
         >
           <Activity className="w-4 h-4" /> <span className="hidden sm:inline">Dashboard</span>
@@ -208,26 +256,83 @@ export default function Home() {
         <Button 
           variant="ghost" 
           size="sm" 
-          className={`rounded-full gap-2 ${view === 'profile' ? 'bg-white/10 text-white' : 'text-slate-400'}`}
+          className={`rounded-full gap-2 transition-all ${view === 'profile' ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'}`}
           onClick={() => setView("profile")}
         >
           <User className="w-4 h-4" /> <span className="hidden sm:inline">Profile</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className={`rounded-full gap-2 transition-all ${view === 'admin' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' : 'text-indigo-300/60 hover:text-indigo-300'}`}
+          onClick={() => setView("admin")}
+        >
+          <Shield className="w-4 h-4" /> <span className="hidden sm:inline">Admin</span>
         </Button>
       </div>
     </nav>
   );
 
+  // ─── Risk Breakdown Component ──────────────────────────────────────────
+  const renderRiskBreakdown = () => {
+    if (!premiumData) return null;
+    const rb = premiumData.riskBreakdown;
+    const factors = [
+      { label: "Weather", val: rb.weather_risk, icon: CloudRain, color: "bg-blue-500" },
+      { label: "Location", val: rb.location_risk, icon: MapPin, color: "bg-orange-500" },
+      { label: "Seasonal", val: rb.seasonal_risk, icon: Sun, color: "bg-yellow-500" },
+      { label: "Historical", val: rb.historical_risk, icon: History, color: "bg-purple-500" },
+      { label: "Wind", val: rb.wind_risk, icon: Wind, color: "bg-cyan-500" },
+      { label: "Humidity", val: rb.humidity_risk, icon: Droplets, color: "bg-teal-500" },
+      { label: "UV Index", val: rb.uv_risk, icon: Sun, color: "bg-amber-500" },
+      { label: "Visibility", val: rb.visibility_risk, icon: Eye, color: "bg-slate-400" },
+      { label: "Flood", val: rb.flood_risk, icon: Waves, color: "bg-blue-700" },
+      { label: "Cyclone", val: rb.cyclone_risk, icon: CloudLightning, color: "bg-red-600" },
+      { label: "Time of Day", val: rb.time_of_day_risk, icon: Clock, color: "bg-indigo-400" },
+    ];
+
+    return (
+      <div className="mb-8 relative z-10">
+        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-4">
+          AI Risk Matrix — {factors.length} Factors
+        </p>
+        <div className="grid grid-cols-1 gap-2">
+          {factors.map((item, i) => (
+            <div key={i} className="group">
+              <div className="flex justify-between text-[11px] text-slate-300 font-medium mb-1">
+                <span className="flex items-center gap-1.5">
+                  <item.icon className="w-3 h-3 text-slate-500 group-hover:text-white transition-colors" />
+                  {item.label}
+                </span>
+                <span className={`font-mono ${item.val > 0.5 ? 'text-red-400' : item.val > 0.2 ? 'text-yellow-400' : 'text-green-400'}`}>
+                  {(item.val * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${item.color} rounded-full opacity-80 risk-bar`}
+                  style={{ width: `${Math.max(2, item.val * 100)}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // ─── SUCCESS VIEW ──────────────────────────────────────────────────────
   if (view === "success") {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center text-center animate-in fade-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-6 ring-4 ring-green-500/30">
+        <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mb-6 ring-4 ring-green-500/30 animate-float">
           <CheckCircle2 className="w-12 h-12 text-green-400" />
         </div>
         <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-emerald-500 mb-4">
           You are Covered!
         </h1>
         <p className="text-xl text-slate-300 max-w-md mx-auto mb-8">
-          Your DownTime policy is active. You are now protected against external disruptions.
+          Your DownTime policy is active. You are now protected against <strong>10+ external disruption factors</strong>.
         </p>
         <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md max-w-sm w-full mx-auto text-left space-y-3">
           <div className="flex justify-between">
@@ -237,6 +342,13 @@ export default function Home() {
           <div className="flex justify-between">
             <span className="text-slate-400">Coverage Limit</span>
             <span className="font-medium text-white">₹{premiumData?.coverageLimit}</span>
+          </div>
+          <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-3">
+            <span className="text-slate-400">Payment Gateway</span>
+            <span className="text-white text-sm font-medium flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              Razorpay (Mock)
+            </span>
           </div>
           <div className="flex justify-between items-center pt-3 border-t border-white/10 mt-3">
             <span className="text-slate-400">Status</span>
@@ -256,6 +368,7 @@ export default function Home() {
     );
   }
 
+  // ─── DASHBOARD VIEW ────────────────────────────────────────────────────
   if (view === "dashboard") {
     return (
       <div className="py-6 animate-in fade-in duration-700">
@@ -263,42 +376,48 @@ export default function Home() {
         
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2">Worker Dashboard</h1>
-          <p className="text-slate-400">Manage your policies and track instant payouts.</p>
+          <p className="text-slate-400">Real-time income protection for Food & Grocery Delivery Partners.</p>
         </header>
 
+        {/* Active Disruption Alert */}
         {dashboardData?.activeEvent && (
-          <div className="mb-8 p-6 bg-red-500/10 border border-red-500/30 rounded-3xl flex items-center justify-between animate-pulse ring-4 ring-red-500/5">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-red-500/20 rounded-2xl">
-                <AlertCircle className="w-8 h-8 text-red-500" />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-red-400 uppercase tracking-tight">Active Disruption Detected</h3>
-                <p className="text-slate-300">
-                  {dashboardData.activeEvent.triggerType} in <strong>{dashboardData.activeEvent.zone}</strong>. 
-                  Your protection is actively monitoring and securing your earnings.
-                </p>
-              </div>
+          <div className="mb-8 p-6 bg-red-500/10 border border-red-500/30 rounded-3xl flex items-start gap-4 ring-4 ring-red-500/5 animate-shimmer">
+            <div className="p-3 bg-red-500/20 rounded-2xl shrink-0 animate-pulse">
+              <AlertCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-red-400 uppercase tracking-tight">
+                ⚠️ Active Disruption Detected
+              </h3>
+              <p className="text-slate-300 mt-1">
+                <span className="font-semibold text-white">{TRIGGER_LABELS[dashboardData.activeEvent.triggerType] || dashboardData.activeEvent.triggerType}</span>
+                {" "}in <strong>{dashboardData.activeEvent.zone}</strong>.
+                Your protection is actively securing your earnings.
+              </p>
             </div>
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-            <p className="text-slate-400 text-sm mb-1">Total Payouts</p>
-            <p className="text-3xl font-bold text-green-400">₹{dashboardData?.stats.totalPayouts || 0}</p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-            <p className="text-slate-400 text-sm mb-1">Protected Days</p>
-            <p className="text-3xl font-bold text-blue-400">{dashboardData?.stats.protectedDays || 0}</p>
-          </div>
-          <div className="bg-white/5 border border-white/10 p-6 rounded-2xl">
-            <p className="text-slate-400 text-sm mb-1">Active Triggers</p>
-            <p className="text-3xl font-bold text-orange-400">{dashboardData?.stats.activeTriggers || 0}</p>
-          </div>
+        {/* Stat Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: "Total Payouts", val: `₹${dashboardData?.stats.totalPayouts || 0}`, icon: IndianRupee, color: "text-green-400", bg: "bg-green-500/10" },
+            { label: "Protected Days", val: dashboardData?.stats.protectedDays || 0, icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10" },
+            { label: "Active Triggers", val: dashboardData?.stats.activeTriggers || 0, icon: Zap, color: "text-orange-400", bg: "bg-orange-500/10" },
+            { label: "Coverage Used", val: `${dashboardData?.stats.coverageUtilization || 0}%`, icon: Activity, color: "text-purple-400", bg: "bg-purple-500/10" },
+          ].map((stat, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/[0.07] transition-all group">
+              <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                <stat.icon className={`w-5 h-5 ${stat.color}`} />
+              </div>
+              <p className="text-slate-400 text-xs mb-1 uppercase tracking-wider">{stat.label}</p>
+              <p className={`text-2xl font-bold ${stat.color} animate-counter`}>{stat.val}</p>
+            </div>
+          ))}
         </div>
 
         <div className="grid lg:grid-cols-[2fr_1fr] gap-8">
+          {/* Claims History */}
           <div className="space-y-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <History className="w-5 h-5 text-indigo-400" /> Recent History
@@ -319,16 +438,19 @@ export default function Home() {
                     dashboardData.claims.map((claim) => (
                       <tr key={claim.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4 text-sm">{new Date(claim.eventDate).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 text-sm font-medium">{claim.triggerType}</td>
+                        <td className="px-6 py-4 text-sm font-medium">
+                          {TRIGGER_LABELS[claim.triggerType] || claim.triggerType}
+                        </td>
                         <td className="px-6 py-4 text-sm">{claim.hoursLost}h</td>
                         <td className="px-6 py-4 text-sm text-green-400 font-bold">₹{claim.finalPayout}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-[10px] font-bold rounded-md ${
-                            claim.status === 'PAID' ? 'bg-green-500/20 text-green-400' : 
+                          <span className={`px-2.5 py-1 text-[10px] font-bold rounded-full ${
+                            claim.status === 'PAID' ? 'bg-green-500/20 text-green-400 ring-1 ring-green-500/30' : 
                             claim.status === 'APPROVED' ? 'bg-blue-500/20 text-blue-400' :
+                            claim.status === 'FLAGGED' ? 'bg-red-500/20 text-red-400' :
                             'bg-orange-500/20 text-orange-400'
                           }`}>
-                            {claim.status === 'PAID' ? 'PAID (INSTANT)' : claim.status}
+                            {claim.status === 'PAID' ? '⚡ RAZORPAY UPI' : claim.status}
                           </span>
                         </td>
                       </tr>
@@ -345,14 +467,15 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Active Policy */}
           <div className="space-y-6">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Zap className="w-5 h-5 text-yellow-400" /> Active Policy
             </h2>
             {dashboardData?.activePolicy ? (
-              <div className="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                  <Shield className="w-24 h-24" />
+              <div className="bg-gradient-to-b from-indigo-600/10 to-transparent border border-indigo-500/20 p-6 rounded-2xl relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Shield className="w-28 h-28" />
                 </div>
                 <div className="relative z-10">
                   <div className="flex justify-between items-start mb-6">
@@ -360,16 +483,16 @@ export default function Home() {
                       <p className="text-xs text-indigo-300 font-bold uppercase mb-1">Weekly Limit</p>
                       <p className="text-3xl font-bold">₹{dashboardData.activePolicy.coverageLimit}</p>
                     </div>
-                    <span className="bg-green-500 text-white text-[10px] font-black px-2 py-1 rounded">ACTIVE</span>
+                    <span className="bg-green-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg shadow-green-500/20">ACTIVE</span>
                   </div>
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-400">Remaining</span>
                       <span className="text-white font-medium">₹{dashboardData.activePolicy.remainingLimit}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
                       <div 
-                        className="h-full bg-indigo-500" 
+                        className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000" 
                         style={{ width: `${(dashboardData.activePolicy.remainingLimit / dashboardData.activePolicy.coverageLimit) * 100}%` }} 
                       />
                     </div>
@@ -398,6 +521,7 @@ export default function Home() {
     );
   }
 
+  // ─── PROFILE VIEW ──────────────────────────────────────────────────────
   if (view === "profile") {
     return (
       <div className="py-6 animate-in fade-in duration-700">
@@ -410,7 +534,7 @@ export default function Home() {
 
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="bg-white/5 border border-white/10 p-8 rounded-3xl flex items-center gap-8">
-            <div className="w-24 h-24 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-4xl font-bold shadow-lg shadow-indigo-500/20">
+            <div className="w-24 h-24 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-4xl font-bold shadow-lg shadow-indigo-500/20 animate-float">
               {dashboardData?.worker.name.charAt(0)}
             </div>
             <div>
@@ -426,7 +550,7 @@ export default function Home() {
               { label: "Base Zone", val: dashboardData?.worker.zone, icon: MapPin },
               { label: "Daily Income", val: `₹${dashboardData?.worker.dailyIncome}`, icon: IndianRupee },
             ].map((item, i) => (
-              <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl">
+              <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/[0.07] transition-all">
                 <p className="text-xs text-slate-500 font-bold uppercase mb-2 flex items-center gap-1.5">
                   <item.icon className="w-3 h-3" /> {item.label}
                 </p>
@@ -445,6 +569,101 @@ export default function Home() {
     );
   }
 
+  // ─── ADMIN VIEW ────────────────────────────────────────────────────────
+  if (view === "admin") {
+    // Basic mock mapping if backend lacks specific predictive arrays
+    return (
+      <div className="py-6 animate-in fade-in duration-700">
+        {renderNavbar()}
+
+        <header className="mb-12">
+          <h1 className="text-3xl font-bold text-white mb-2">Insurer Dashboard (Admin)</h1>
+          <p className="text-slate-400">Portfolio analytics, Loss ratios, and AI Disruption Predictions.</p>
+        </header>
+
+        {loading ? (
+          <div className="flex justify-center p-12">
+            <span className="animate-spin w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full" />
+          </div>
+        ) : (
+          <div className="space-y-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { label: "Active Policies", val: adminData?.activePolicies || 0, icon: Shield, color: "text-blue-400", bg: "bg-blue-500/10" },
+                { label: "Weekly Premiums", val: `₹${adminData?.totalPremiumsThisWeek || 0}`, icon: IndianRupee, color: "text-green-400", bg: "bg-green-500/10" },
+                { label: "Total Payouts (Wk)", val: `₹${adminData?.totalPayoutsThisWeek || 0}`, icon: IndianRupee, color: "text-red-400", bg: "bg-red-500/10" },
+                { label: "Loss Ratio (Wk)", val: `${adminData?.lossRatio !== undefined ? adminData.lossRatio : 0}%`, icon: Activity, color: (adminData?.lossRatio || 0) > 80 ? "text-red-400" : "text-emerald-400", bg: "bg-white/5" },
+              ].map((stat, i) => (
+                <div key={i} className={`p-6 rounded-3xl border border-white/10 ${stat.bg}`}>
+                  <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <stat.icon className={`w-4 h-4 ${stat.color}`} />
+                    {stat.label}
+                  </p>
+                  <p className={`text-3xl font-bold ${stat.color}`}>{stat.val}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <CloudLightning className="text-yellow-400 w-5 h-5" />
+                  Next Week&apos;s Predictive Claims
+                </h2>
+                <div className="space-y-4">
+                  {[
+                    { city: "Hyderabad", zone: "Kondapur", type: "EXTREME_HEAT", prob: 85, impact: "High" },
+                    { city: "Mumbai", zone: "Dharavi", type: "FLOOD_WARNING", prob: 62, impact: "Medium" },
+                    { city: "Delhi", zone: "Connaught Place", type: "SEVERE_POLLUTION", prob: 92, impact: "High" },
+                  ].map((pred, i) => (
+                    <div key={i} className="flex justify-between items-center p-4 bg-black/40 rounded-2xl border border-white/5">
+                      <div>
+                        <p className="font-bold text-white text-sm">{pred.city} ({pred.zone})</p>
+                        <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                          <AlertCircle className="w-3 h-3 text-yellow-500" /> {TRIGGER_LABELS[pred.type] || pred.type}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-indigo-400">{pred.prob}% Probability</p>
+                        <p className={`text-[10px] uppercase font-bold mt-1 ${pred.impact === 'High' ? 'text-red-400' : 'text-orange-400'}`}>{pred.impact} IMPACT</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
+                <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+                  <Activity className="text-red-400 w-5 h-5" />
+                  Recent Fraud Checks (Phase 3)
+                </h2>
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl relative overflow-hidden">
+                    <span className="absolute top-0 right-0 px-3 py-1 bg-red-500 text-white text-[10px] font-bold rounded-bl-lg">FLAGGED</span>
+                    <p className="text-white text-sm font-bold mb-1">Claim #CLM-9281</p>
+                    <p className="text-slate-400 text-xs">Worker ID: user-seed-123</p>
+                    <div className="mt-3 text-xs text-red-300 bg-red-500/10 rounded-lg p-2 font-mono">
+                      Reason: GPS Spoofing Detected (Too fast travel between zones)
+                    </div>
+                  </div>
+                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl relative overflow-hidden">
+                    <span className="absolute top-0 right-0 px-3 py-1 bg-green-500 text-white text-[10px] font-bold rounded-bl-lg">CLEARED</span>
+                    <p className="text-white text-sm font-bold mb-1">Claim #CLM-9282</p>
+                    <p className="text-slate-400 text-xs">Location: Hyderabad, Kondapur</p>
+                    <div className="mt-3 text-xs text-green-300 bg-green-500/10 rounded-lg p-2 font-mono">
+                      Validation: External Weather API matched API payload.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ─── QUOTE VIEW (HOME) ────────────────────────────────────────────────
   return (
     <div className="py-6 animate-in fade-in duration-700">
       {renderNavbar()}
@@ -453,13 +672,13 @@ export default function Home() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-sm font-medium border border-blue-500/20 mb-6 font-mono tracking-tight uppercase">
             <Zap className="w-4 h-4" />
-            AI-Driven Parametric Engine v1.0
+            AI-Driven Parametric Engine v2.0
           </div>
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 drop-shadow-sm">DownTime</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400 drop-shadow-sm animate-gradient">DownTime</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 max-w-2xl font-light">
-            Automated, parametric income protection that pays out instantly when weather or events disrupt your work.
+          <p className="text-lg md:text-xl text-slate-400 max-w-2xl font-light leading-relaxed">
+            Automated, parametric income protection exclusively designed for <strong className="text-white">Food & Q-Commerce Delivery Partners (Zomato, Swiggy, Zepto)</strong>, paying out instantly via Razorpay when uncontrollable external disruptions hit.
           </p>
         </div>
       </header>
@@ -544,9 +763,9 @@ export default function Home() {
               <Label className="text-lg text-slate-200">Protection Tier</Label>
               <RadioGroup value={coveragePct} onValueChange={setCoveragePct} className="grid grid-cols-3 gap-4">
                 {[
-                  { id: "0.50", label: "Basic", desc: "50% cover" },
-                  { id: "0.70", label: "Standard", desc: "70% cover" },
-                  { id: "0.90", label: "Premium", desc: "90% cover" },
+                  { id: "0.50", label: "Basic", desc: "50% cover", price: "Lowest" },
+                  { id: "0.70", label: "Standard", desc: "70% cover", price: "Balanced" },
+                  { id: "0.90", label: "Premium", desc: "90% cover", price: "Max Safety" },
                 ].map((tier) => (
                   <div key={tier.id}>
                     <RadioGroupItem value={tier.id} id={tier.id} className="peer sr-only" />
@@ -561,10 +780,33 @@ export default function Home() {
                         )}
                       </span>
                       <span className="text-xs text-slate-400">{tier.desc}</span>
+                      <span className="text-[10px] text-indigo-400 mt-1 font-mono">{tier.price}</span>
                     </Label>
                   </div>
                 ))}
               </RadioGroup>
+            </div>
+
+            {/* Covered Disruptions mini-grid */}
+            <div className="pt-4 border-t border-white/5">
+              <Label className="text-sm text-slate-400 mb-3 block">Covered Disruptions</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { icon: CloudRain, label: "Rain" },
+                  { icon: Thermometer, label: "Heat" },
+                  { icon: Wind, label: "Wind" },
+                  { icon: Eye, label: "Fog" },
+                  { icon: Droplets, label: "Humidity" },
+                  { icon: Waves, label: "Floods" },
+                  { icon: CloudLightning, label: "Cyclone" },
+                  { icon: AlertCircle, label: "AQI" },
+                ].map((item, i) => (
+                  <div key={i} className="flex flex-col items-center p-2 rounded-lg bg-white/[0.03] border border-white/5 hover:border-indigo-500/30 transition-all">
+                    <item.icon className="w-4 h-4 text-slate-400 mb-1" />
+                    <span className="text-[10px] text-slate-500">{item.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -572,7 +814,6 @@ export default function Home() {
         {/* Dynamic Display */}
         <div className="space-y-6">
           <div className="rounded-3xl border border-indigo-500/20 bg-gradient-to-b from-indigo-500/10 to-transparent p-6 sm:p-8 backdrop-blur-xl relative overflow-hidden group">
-            {/* Glossy overlay */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
             
             <div className="flex justify-between items-start mb-8 relative z-10">
@@ -588,13 +829,14 @@ export default function Home() {
 
               {premiumData && (
                 <div className={`px-4 py-2 rounded-full text-xs font-bold border flex items-center gap-2 ${
+                  premiumData.riskLabel === 'Critical' ? 'bg-red-600/20 text-red-400 border-red-500/30' :
                   premiumData.riskLabel === 'Very High' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                   premiumData.riskLabel === 'High' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
-                  premiumData.riskLabel === 'Medium' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
+                  premiumData.riskLabel === 'Moderate' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' :
                   'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                 }`}>
                   <AlertCircle className="w-3 h-3" />
-                  {premiumData.riskLabel} Risk ({premiumData.riskScore})
+                  {premiumData.riskLabel} ({(premiumData.riskScore * 100).toFixed(0)}%)
                 </div>
               )}
             </div>
@@ -613,29 +855,15 @@ export default function Home() {
                   {Math.round(Number(coveragePct) * 100)}%
                 </span>
               </div>
+              {premiumData?.premiumBreakdown && (
+                <div className="flex justify-between text-sm border-t border-white/5 pt-3">
+                  <span className="text-slate-400">Seasonal Factor</span>
+                  <span className="text-indigo-300 font-mono text-xs">×{premiumData.premiumBreakdown.seasonalAdjustment}</span>
+                </div>
+              )}
             </div>
 
-            {premiumData && (
-              <div className="mb-8 relative z-10">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-3">AI Risk Breakdown</p>
-                <div className="space-y-3">
-                  {[
-                    { label: "Weather", val: premiumData.riskBreakdown.weather_risk, icon: CloudRain, color: "bg-blue-500" },
-                    { label: "Location", val: premiumData.riskBreakdown.location_risk, icon: MapPin, color: "bg-orange-500" },
-                  ].map((item, i) => (
-                    <div key={i} className="space-y-1.5">
-                      <div className="flex justify-between text-xs text-slate-300 font-medium">
-                        <span className="flex items-center gap-1.5"><item.icon className="w-3 h-3 text-slate-500" /> {item.label}</span>
-                        <span>{item.val.toFixed(2)}</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                        <div className={`h-full ${item.color} rounded-full opacity-80`} style={{ width: `${item.val * 100}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {renderRiskBreakdown()}
 
             <Button 
               className={`w-full py-7 rounded-2xl text-lg font-bold transition-all relative z-10 ${
@@ -656,7 +884,7 @@ export default function Home() {
               )}
             </Button>
             <p className="text-center text-[10px] text-slate-500 mt-4 relative z-10 flex items-center justify-center gap-1">
-              <Shield className="w-3 h-3 opacity-50" /> Fully parametric • Zero manual claims
+              <Shield className="w-3 h-3 opacity-50" /> 10+ Sensors • Zero Claims • Instant Payouts
             </p>
           </div>
         </div>

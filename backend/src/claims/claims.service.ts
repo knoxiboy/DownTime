@@ -92,14 +92,15 @@ export class ClaimService {
 
     // Instant Payout Simulation (Phase 3)
     if (fraudResult.passed && finalPayout > 0) {
-      this.logger.log(`>>> PAYOUT: Transferring ₹${finalPayout} via UPI to worker: ${worker.name}`);
+      this.logger.log(`>>> PAYOUT: Initiating Razorpay Sandbox payout of ₹${finalPayout} to worker: ${worker.name} (UPI)`);
       
+      const razorpayTxId = `pay_mock_${Date.now()}_${Math.random().toString(36).substring(7)}`;
       await this.prisma.payment.create({
         data: {
           claimId: claim.id,
           amount: finalPayout,
-          method: 'UPI_INSTANT',
-          transactionId: `UPI_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          method: 'RAZORPAY_UPI_SANDBOX',
+          transactionId: razorpayTxId,
           status: 'SUCCESS',
         },
       });
