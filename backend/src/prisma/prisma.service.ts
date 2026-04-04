@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
@@ -20,33 +21,26 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     for (const path of possiblePaths) {
       if (existsSync(path)) {
         console.log('PRISMA_SERVICE: Found .env at:', path);
-        dotenv.config({ path });
+        dotenv.config({ path, override: true });
         break;
       }
     }
     
-    const url = process.env.DATABASE_URL;
-    
-    console.log('PRISMA_SERVICE: Using DATABASE_URL from environment variable.');
+    const url = (process.env.DATABASE_URL || '').trim();
+    console.log('PRISMA_SERVICE: Using DATABASE_URL from environment variable. Length: ', url.length);
 
     super({
-      datasources: {
-        db: {
-          url: url,
-        },
-      },
-      log: ['error', 'info', 'warn'],
+      log: ['error', 'warn'],
     });
-
   }
 
   async onModuleInit() {
-    console.log('PRISMA_SERVICE: Connecting to database...');
+    console.log('PRISMA_SERVICE: Using native TCP connection to Neon database');
     try {
       await this.$connect();
-      console.log('PRISMA_SERVICE: ✅ Connected to Neon database successfully!');
+      console.log('PRISMA_SERVICE: ✅ Native driver initialized and connected successfully!');
     } catch (err) {
-      console.error('PRISMA_SERVICE: ❌ Connection failed!', err);
+      console.error('PRISMA_SERVICE: ❌ Initialization failed!', err);
     }
   }
 
