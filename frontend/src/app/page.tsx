@@ -12,8 +12,9 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap, Wind, Droplets, Sun, Eye, Waves, CloudLightning, Thermometer, Clock } from "lucide-react";
+import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap, Wind, Droplets, Sun, Eye, Waves, CloudLightning, Thermometer, Clock, UserPlus, Phone, Briefcase, Play } from "lucide-react";
 import { api } from "@/lib/axios";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 
 interface PremiumResponse {
   weeklyPremium: number;
@@ -100,14 +101,60 @@ interface AdminData {
   totalPremiumsThisWeek: number;
   totalPayoutsThisWeek: number;
   lossRatio: number;
+  totalWorkers: number;
+  flaggedClaims: number;
+  weeklyClaimsCount: number;
+  profitability: number;
+  triggerDistribution: Record<string, number>;
 }
 
-// Constants
+// 45 Indian cities
 const CITIES: Record<string, string[]> = {
-  hyderabad: ["Kondapur", "Hitech City", "Secunderabad", "Gachibowli"],
-  mumbai: ["Dharavi", "Bandra", "Andheri"],
-  bangalore: ["Whitefield", "Koramangala"],
-  delhi: ["Connaught Place", "Dwarka", "Rohini"],
+  hyderabad: ["Kondapur", "Hitech City", "Secunderabad", "Gachibowli", "Madhapur"],
+  mumbai: ["Dharavi", "Bandra", "Andheri", "Powai", "Dadar"],
+  bangalore: ["Whitefield", "Koramangala", "Indiranagar", "HSR Layout"],
+  delhi: ["Connaught Place", "Dwarka", "Rohini", "Saket"],
+  chennai: ["T. Nagar", "Anna Nagar", "Adyar"],
+  kolkata: ["Salt Lake", "Park Street", "Howrah"],
+  pune: ["Kothrud", "Hinjewadi", "Viman Nagar"],
+  ahmedabad: ["SG Highway", "Navrangpura", "Maninagar"],
+  jaipur: ["Malviya Nagar", "Vaishali Nagar", "C-Scheme"],
+  lucknow: ["Hazratganj", "Gomti Nagar", "Aminabad"],
+  surat: ["Adajan", "Vesu", "Athwa"],
+  kanpur: ["Civil Lines", "Swaroop Nagar"],
+  nagpur: ["Sitabuldi", "Dharampeth"],
+  indore: ["Vijay Nagar", "Palasia"],
+  thane: ["Ghodbunder Road", "Hiranandani"],
+  bhopal: ["Arera Colony", "MP Nagar"],
+  visakhapatnam: ["MVP Colony", "Dwaraka Nagar"],
+  patna: ["Boring Road", "Kankarbagh"],
+  vadodara: ["Alkapuri", "Sayajigunj"],
+  ghaziabad: ["Indirapuram", "Vaishali"],
+  ludhiana: ["Model Town", "Sarabha Nagar"],
+  agra: ["Civil Lines", "Sanjay Place"],
+  nashik: ["College Road", "Gangapur Road"],
+  ranchi: ["Main Road", "Lalpur"],
+  meerut: ["Shastri Nagar", "Pallavpuram"],
+  rajkot: ["Race Course", "Kalawad Road"],
+  varanasi: ["Lanka", "Sigra"],
+  amritsar: ["Lawrence Road", "Ranjit Avenue"],
+  allahabad: ["Civil Lines", "George Town"],
+  coimbatore: ["RS Puram", "Gandhipuram"],
+  madurai: ["Anna Nagar", "KK Nagar"],
+  guwahati: ["Paltan Bazaar", "Zoo Road"],
+  chandigarh: ["Sector 17", "Sector 35"],
+  mysore: ["Vijayanagar", "Kuvempunagar"],
+  trivandrum: ["Kowdiar", "Pattom"],
+  kochi: ["MG Road", "Edappally"],
+  dehradun: ["Rajpur Road", "Clock Tower"],
+  jammu: ["Gandhi Nagar", "Residency Road"],
+  jodhpur: ["Sardarpura", "Paota"],
+  raipur: ["Shankar Nagar", "Pandri"],
+  mangalore: ["Hampankatta", "Kadri"],
+  noida: ["Sector 18", "Sector 62"],
+  gurgaon: ["DLF Phase 1", "Cyber City", "Sohna Road"],
+  faridabad: ["Sector 15", "NIT"],
+  howrah: ["Shibpur", "Kadamtala"],
 };
 
 const TRIGGER_LABELS: Record<string, string> = {
@@ -129,99 +176,158 @@ const TRIGGER_LABELS: Record<string, string> = {
 const DEFAULT_WORKER_ID = "user-seed-123";
 
 export default function Home() {
-  const [view, setView] = useState<"quote" | "success" | "dashboard" | "profile" | "admin">("quote");
+  const [view, setView] = useState<"register" | "quote" | "success" | "dashboard" | "profile" | "admin">("register");
   const [dailyIncome, setDailyIncome] = useState([700]);
   const [city, setCity] = useState("hyderabad");
   const [zone, setZone] = useState("Kondapur");
   const [coveragePct, setCoveragePct] = useState("0.70");
+  const [workerId, setWorkerId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [premiumData, setPremiumData] = useState<PremiumResponse | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [adminData, setAdminData] = useState<AdminData | null>(null);
+  const [trendData, setTrendData] = useState<any[]>([]);
+  const [fraudStats, setFraudStats] = useState<any>(null);
+  const [simulating, setSimulating] = useState(false);
+
+  // Registration form
+  const [regName, setRegName] = useState("");
+  const [regPhone, setRegPhone] = useState("");
+  const [regCity, setRegCity] = useState("hyderabad");
+  const [regZone, setRegZone] = useState("Kondapur");
+  const [regPlatform, setRegPlatform] = useState("zomato");
+  const [regIncome, setRegIncome] = useState([700]);
+
+  // Check saved worker on mount
+  useEffect(() => {
+    const saved = localStorage.getItem("downtime_worker_id");
+    if (saved) {
+      setWorkerId(saved);
+      setView("quote");
+    }
+  }, []);
 
   // Auto update zone when city changes
   useEffect(() => {
-    setZone(CITIES[city as keyof typeof CITIES][0]);
+    setZone(CITIES[city as keyof typeof CITIES]?.[0] || "");
   }, [city]);
+  useEffect(() => {
+    setRegZone(CITIES[regCity as keyof typeof CITIES]?.[0] || "");
+  }, [regCity]);
+
+  // Registration handler
+  const handleRegister = async () => {
+    if (!regName || !regPhone) return;
+    setLoading(true);
+    try {
+      const resp = await api.post("/api/workers/register", {
+        name: regName,
+        phone: regPhone,
+        city: regCity,
+        zone: regZone,
+        platform: regPlatform,
+        dailyIncome: regIncome[0],
+      });
+      const id = resp.data.id;
+      setWorkerId(id);
+      localStorage.setItem("downtime_worker_id", id);
+      setCity(regCity);
+      setZone(regZone);
+      setDailyIncome(regIncome);
+      setView("quote");
+    } catch (err: any) {
+      // If duplicate phone, try login
+      try {
+        const loginResp = await api.get(`/api/workers/phone/${regPhone}`);
+        if (loginResp.data?.id) {
+          setWorkerId(loginResp.data.id);
+          localStorage.setItem("downtime_worker_id", loginResp.data.id);
+          setCity(loginResp.data.city);
+          setView("quote");
+        }
+      } catch { alert("Registration failed. Is the backend running?"); }
+    } finally { setLoading(false); }
+  };
 
   // Fetch premium calculation
   useEffect(() => {
     if (view !== "quote") return;
-
     const fetchPremium = async () => {
       setLoading(true);
       try {
         const response = await api.get("/api/premium/calculate", {
-          params: {
-            income: dailyIncome[0],
-            city,
-            zone,
-            coverage: coveragePct,
-          },
+          params: { income: dailyIncome[0], city, zone, coverage: coveragePct },
         });
         setPremiumData(response.data);
-      } catch (err) {
-        console.error("Failed to fetch premium", err);
-      } finally {
-        setLoading(false);
-      }
+      } catch (err) { console.error("Failed to fetch premium", err); }
+      finally { setLoading(false); }
     };
-
-    const delay = setTimeout(() => {
-      fetchPremium();
-    }, 500);
-
+    const delay = setTimeout(() => { fetchPremium(); }, 500);
     return () => clearTimeout(delay);
   }, [dailyIncome, city, zone, coveragePct, view]);
 
   // Fetch dashboard data
+  const wid = workerId || DEFAULT_WORKER_ID;
   const fetchDashboard = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/api/dashboard/worker/${DEFAULT_WORKER_ID}`);
+      const response = await api.get(`/api/dashboard/worker/${wid}`);
       setDashboardData(response.data);
-    } catch (err) {
-      console.error("Failed to fetch dashboard", err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error("Failed to fetch dashboard", err); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => {
     if (view === "dashboard" || view === "profile") {
       fetchDashboard();
     } else if (view === "admin") {
-      const fetchAdminDashboard = async () => {
+      const fetchAll = async () => {
         setLoading(true);
         try {
-          const response = await api.get("/api/dashboard/admin");
-          // Re-use dashboard data state or create a separate one. Let's just create a new state variable next to dashboardData.
-          setAdminData(response.data);
-        } catch (err) {
-          console.error("Failed to fetch admin dashboard", err);
-        } finally {
-          setLoading(false);
-        }
+          const [adminResp, trendResp, fraudResp] = await Promise.all([
+            api.get("/api/dashboard/admin"),
+            api.get("/api/dashboard/admin/trends").catch(() => ({ data: { daily: [] } })),
+            api.get("/api/dashboard/admin/fraud-stats").catch(() => ({ data: null })),
+          ]);
+          setAdminData(adminResp.data);
+          setTrendData(trendResp.data?.daily || []);
+          setFraudStats(fraudResp.data);
+        } catch (err) { console.error("Failed to fetch admin dashboard", err); }
+        finally { setLoading(false); }
       };
-      fetchAdminDashboard();
+      fetchAll();
     }
   }, [view]);
+
+  // Simulate Disruption
+  const handleSimulateDisruption = async () => {
+    setSimulating(true);
+    try {
+      await api.post("/api/triggers/simulate", {
+        city: dashboardData?.worker?.city || city,
+        zone: dashboardData?.worker?.zone || zone,
+        triggerType: "HEAVY_RAIN",
+        value: 55,
+      });
+      await new Promise(r => setTimeout(r, 2000));
+      await fetchDashboard();
+    } catch (err) { console.error("Simulation failed", err); }
+    finally { setSimulating(false); }
+  };
 
   const handlePurchase = async () => {
     setLoading(true);
     try {
       await api.post("/api/policies", {
-        workerId: DEFAULT_WORKER_ID,
+        workerId: wid,
         coveragePct: Number(coveragePct),
       });
       setView("success");
     } catch (err) {
       console.error("Failed to purchase policy", err);
       alert("Failed to activate policy. Please make sure the backend is running.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   const renderNavbar = () => (
@@ -234,7 +340,7 @@ export default function Home() {
           <Shield className="w-5 h-5 text-white" />
         </div>
         <span className="text-xl font-bold tracking-tight text-white">DownTime</span>
-        <span className="text-[9px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">v2.0</span>
+        <span className="text-[9px] font-mono text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">v3.0</span>
       </div>
       <div className="flex items-center gap-4">
         <Button 
@@ -320,6 +426,75 @@ export default function Home() {
       </div>
     );
   };
+
+  // ─── REGISTRATION VIEW ─────────────────────────────────────────────────
+  if (view === "register") {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-12 animate-in fade-in duration-700">
+        <div className="max-w-lg w-full">
+          <div className="text-center mb-10">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-indigo-500/30 animate-float">
+              <Shield className="w-9 h-9 text-white" />
+            </div>
+            <h1 className="text-4xl font-extrabold mb-3">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">DownTime</span>
+            </h1>
+            <p className="text-slate-400 text-lg">AI-powered income protection for gig workers</p>
+            <p className="text-xs text-slate-500 mt-2">{Object.keys(CITIES).length} cities • 10+ risk factors • Instant payouts</p>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-xl shadow-2xl space-y-6">
+            <div className="space-y-2">
+              <Label className="text-sm text-slate-300 flex items-center gap-2"><UserPlus className="w-4 h-4" /> Full Name</Label>
+              <input value={regName} onChange={e => setRegName(e.target.value)} placeholder="Rajesh Kumar" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all" />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm text-slate-300 flex items-center gap-2"><Phone className="w-4 h-4" /> Phone Number</Label>
+              <input value={regPhone} onChange={e => setRegPhone(e.target.value)} placeholder="+91 98765 43210" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 outline-none transition-all" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-300 flex items-center gap-2"><MapPin className="w-4 h-4" /> City</Label>
+                <Select value={regCity} onValueChange={setRegCity}>
+                  <SelectTrigger className="bg-black/40 border-white/10 h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10 max-h-60">
+                    {Object.keys(CITIES).map(c => (<SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm text-slate-300">Zone</Label>
+                <Select value={regZone} onValueChange={setRegZone}>
+                  <SelectTrigger className="bg-black/40 border-white/10 h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                  <SelectContent className="bg-slate-900 border-white/10">
+                    {(CITIES[regCity as keyof typeof CITIES] || []).map(z => (<SelectItem key={z} value={z}>{z}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm text-slate-300 flex items-center gap-2"><Briefcase className="w-4 h-4" /> Platform</Label>
+              <Select value={regPlatform} onValueChange={setRegPlatform}>
+                <SelectTrigger className="bg-black/40 border-white/10 h-12 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-slate-900 border-white/10">
+                  {["zomato", "swiggy", "zepto", "amazon", "dunzo", "blinkit", "bigbasket", "flipkart"].map(p => (
+                    <SelectItem key={p} value={p} className="capitalize">{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between"><Label className="text-sm text-slate-300 flex items-center gap-2"><IndianRupee className="w-4 h-4" /> Daily Income</Label><span className="text-indigo-300 font-bold">₹{regIncome[0]}</span></div>
+              <Slider value={regIncome} onValueChange={setRegIncome} min={200} max={2000} step={50} />
+            </div>
+            <Button className="w-full py-6 rounded-2xl text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-[0_0_40px_-10px_rgba(99,102,241,0.5)] transition-all hover:scale-[1.02]" onClick={handleRegister} disabled={loading || !regName || !regPhone}>
+              {loading ? <span className="flex items-center gap-2"><span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full" />Creating Account...</span> : <span className="flex items-center gap-2"><UserPlus className="w-5 h-5" /> Join DownTime <ChevronRight className="w-5 h-5" /></span>}
+            </Button>
+            <p className="text-center text-xs text-slate-500">Already registered? Enter your phone to log in.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ─── SUCCESS VIEW ──────────────────────────────────────────────────────
   if (view === "success") {
