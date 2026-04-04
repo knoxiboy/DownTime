@@ -6,3 +6,5 @@ numpy
 pydantic
 python-dotenv
 httpx
+joblib
+scipy

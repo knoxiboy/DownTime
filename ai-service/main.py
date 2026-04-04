@@ -8,9 +8,9 @@ import random
 import hashlib
 
 app = FastAPI(
-    title="DownTime AI Risk Engine v2.0",
-    description="Advanced multi-factor AI risk assessment for parametric gig worker income protection",
-    version="2.0.0",
+    title="DownTime AI Risk Engine v3.0",
+    description="ML-powered multi-factor risk assessment with trained GradientBoosting model for parametric gig worker insurance",
+    version="3.0.0",
 )
 
 app.add_middleware(
@@ -583,6 +583,124 @@ def evaluate_fraud(req: FraudRequest) -> FraudResponse:
     )
 
 
+# ─── ML MODEL ENDPOINTS ────────────────────────────────────────────────────────
+
+from ml_model import pricing_model, CITY_PROFILES as ML_CITY_PROFILES, PLATFORMS
+from weather_api import get_live_weather, get_forecast, get_supported_cities
+
+
+class MLPremiumRequest(BaseModel):
+    city: str = "hyderabad"
+    zone: str = "default"
+    daily_income: float = 500
+    coverage_pct: float = 0.7
+    working_hours: int = 8
+    experience_days: int = 30
+    no_claim_streak: int = 0
+    claims_30d: int = 0
+    platform: str = "zomato"
+    rain_mm_hr: float = 0
+    temperature_c: float = 30
+    aqi: float = 100
+    wind_kmh: float = 10
+    humidity_pct: float = 50
+    uv_index: float = 5
+    visibility_km: float = 8
+
+
+@app.post("/ml/predict-premium")
+async def ml_predict_premium(req: MLPremiumRequest):
+    """ML-powered premium prediction using trained GradientBoosting model."""
+    result = pricing_model.predict_premium(req.dict())
+    return result
+
+
+@app.get("/ml/model-info")
+async def ml_model_info():
+    """Get ML model metadata and training info."""
+    return pricing_model.get_model_info()
+
+
+@app.get("/ml/cities")
+async def ml_list_cities():
+    """List all supported cities with zones."""
+    cities_data = {}
+    for city, profile in ML_CITY_PROFILES.items():
+        cities_data[city] = {
+            "zones": list(profile["zones"].keys()),
+            "risk_profile": {
+                "flood_prone": profile["flood"],
+                "cyclone_prone": profile["cyclone"],
+                "pollution_prone": profile["pollution"],
+                "fog_prone": profile["fog"],
+            }
+        }
+    return {"cities": cities_data, "total": len(cities_data), "platforms": PLATFORMS}
+
+
+@app.get("/weather/live/{city}")
+async def live_weather(city: str):
+    """Get real-time weather from OpenWeatherMap (with simulation fallback)."""
+    data = await get_live_weather(city)
+    return data
+
+
+@app.get("/weather/forecast/{city}")
+async def weather_forecast(city: str):
+    """Get 5-day forecast for predictive risk analytics."""
+    data = await get_forecast(city)
+    return data
+
+
+@app.get("/weather/supported-cities")
+async def supported_cities():
+    """List all cities with live weather support."""
+    return {"cities": get_supported_cities(), "total": len(get_supported_cities())}
+
+
+class MLFraudRequest(BaseModel):
+    rain_mm_hr: float = 0
+    temperature_c: float = 30
+    aqi: float = 100
+    wind_kmh: float = 10
+    humidity_pct: float = 50
+    uv_index: float = 5
+    visibility_km: float = 8
+    drainage_quality: float = 0.5
+    infra_quality: float = 0.6
+    zone_base_risk: float = 0.3
+    population_density: float = 0.5
+    daily_income: float = 500
+    working_hours: int = 8
+    experience_days: int = 30
+    no_claim_streak: int = 0
+    claims_30d: int = 0
+    platform_idx: int = 0
+
+
+@app.post("/fraud/ml-evaluate")
+async def ml_fraud_evaluate(req: MLFraudRequest):
+    """ML-based fraud anomaly detection using Isolation Forest."""
+    features = req.dict()
+    features["month_sin"] = 0.0
+    features["month_cos"] = 1.0
+    features["hour_sin"] = 0.0
+    features["hour_cos"] = 1.0
+    features["is_weekend"] = 0
+    result = pricing_model.detect_fraud_anomaly(features)
+    return result
+
+
+# Pre-train ML model on startup
+@app.on_event("startup")
+async def startup_train_model():
+    """Train ML model on server startup."""
+    print("[Startup] Training ML pricing model...")
+    pricing_model.train()
+    print("[Startup] ML model ready!")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
