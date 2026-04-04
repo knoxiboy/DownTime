@@ -6,7 +6,7 @@
       "use": "@vercel/next"
     },
     {
-      "src": "backend/api/index.ts",
+      "src": "backend/package.json",
       "use": "@vercel/node"
     },
     {
