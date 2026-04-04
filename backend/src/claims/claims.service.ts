@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FraudService } from '../fraud/fraud.service';
 import { TriggerService } from '../trigger/trigger.service';
@@ -10,6 +10,7 @@ export class ClaimService {
   constructor(
     private prisma: PrismaService,
     private fraudService: FraudService,
+    @Inject(forwardRef(() => TriggerService))
     private triggerService: TriggerService,
   ) {}
 

@@ -4,6 +4,13 @@ import * as dotenv from 'dotenv';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
+import * as ws from 'ws';
+
+// Set up WebSocket for Neon
+neonConfig.webSocketConstructor = ws;
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
@@ -25,19 +32,19 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       }
     }
     
-    const url = process.env.DATABASE_URL;
-    
+    const url = process.env.DATABASE_URL || '';
     console.log('PRISMA_SERVICE: Using DATABASE_URL from environment variable.');
 
-    super({
-      datasources: {
-        db: {
-          url: url,
-        },
-      },
-      log: ['error', 'info', 'warn'],
-    });
+    let adapter = null;
+    if (url) {
+      const pool = new Pool({ connectionString: url });
+      adapter = new PrismaNeon(pool);
+    }
 
+    super({
+      adapter,
+      log: ['error', 'warn'],
+    });
   }
 
   async onModuleInit() {

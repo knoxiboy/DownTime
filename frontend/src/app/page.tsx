@@ -12,9 +12,8 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap, Wind, Droplets, Sun, Eye, Waves, CloudLightning, Thermometer, Clock, UserPlus, Phone, Briefcase, Play } from "lucide-react";
+import { Shield, CheckCircle2, ChevronRight, Activity, CloudRain, MapPin, IndianRupee, AlertCircle, History, User, Home as HomeIcon, LogOut, Zap, Wind, Droplets, Sun, Eye, Waves, CloudLightning, Thermometer, Clock, UserPlus, Phone, Briefcase } from "lucide-react";
 import { api } from "@/lib/axios";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
 
 interface PremiumResponse {
   weeklyPremium: number;
@@ -187,8 +186,11 @@ export default function Home() {
   const [premiumData, setPremiumData] = useState<PremiumResponse | null>(null);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [adminData, setAdminData] = useState<AdminData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   const [trendData, setTrendData] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
   const [fraudStats, setFraudStats] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [simulating, setSimulating] = useState(false);
 
   // Registration form
@@ -236,6 +238,7 @@ export default function Home() {
       setZone(regZone);
       setDailyIncome(regIncome);
       setView("quote");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     } catch (err: any) {
       // If duplicate phone, try login
       try {
@@ -298,9 +301,11 @@ export default function Home() {
       };
       fetchAll();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view]);
 
   // Simulate Disruption
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleSimulateDisruption = async () => {
     setSimulating(true);
     try {
