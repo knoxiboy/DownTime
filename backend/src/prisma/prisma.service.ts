@@ -35,12 +35,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    console.log('PRISMA_SERVICE: Using native TCP connection to Neon database');
     try {
+      console.log('PRISMA_SERVICE: Connecting to DB...');
       await this.$connect();
-      console.log('PRISMA_SERVICE: ✅ Native driver initialized and connected successfully!');
-    } catch (err) {
-      console.error('PRISMA_SERVICE: ❌ Initialization failed!', err);
+      console.log('PRISMA_SERVICE: ✅ Connected successfully!');
+    } catch (err: any) {
+      console.error('PRISMA_SERVICE: ❌ Connection Error details:', err.message || err);
+      throw err; // Rethrow to crash the function and see it in logs clearly
     }
   }
 
