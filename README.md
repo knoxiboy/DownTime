@@ -90,3 +90,27 @@ We've integrated a sophisticated multi-rule fraud pipeline out-of-the-box:
                      │  UPI Payouts   │
                      └────────────────┘
 ```
+
+---
+
+## 🌐 Live Deployment & Vercel Setup
+
+Because DownTime uses a modern monorepo structure (Next.js frontend + NestJS/Prisma API + FastAPI), proper deployment to Vercel requires two separate projects to ensure independent scaling and proper API routing.
+
+### 1. Backend API Deployment
+1. Go to Vercel Dashboard -> Add New Project -> Import the DownTime GitHub repo.
+2. Name it `down-time-backend`.
+3. Set the **Root Directory** to `backend`.
+4. In Environment Variables, strictly add your Neon Postgres connection string:
+   - `DATABASE_URL`: `postgresql://[user]:[pass]@ep-...neon.tech/neondb?sslmode=require`
+5. Click **Deploy**. Copy the resulting Vercel URL (e.g., `https://down-time-backend.vercel.app`).
+
+### 2. Frontend App Deployment
+1. Go to Vercel Dashboard -> Add New Project -> Import the DownTime GitHub repo again.
+2. Name it `down-time-app`.
+3. Set the **Root Directory** to `frontend`.
+4. In Environment Variables, tell the frontend where to find the API:
+   - `NEXT_PUBLIC_API_URL`: Paste the backend URL from step 1 (e.g., `https://down-time-backend.vercel.app`).
+5. Click **Deploy**.
+
+> **Note**: Setting the Root Directory explicitly for each project forces Vercel to optimize the build process specifically for Next.js or NestJS without colliding configs. Defaulting `axios` configurations safely resolves proxy issues when pointing directly to your live backend domain.
