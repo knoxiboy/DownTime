@@ -55,7 +55,7 @@ We've integrated a sophisticated multi-rule fraud pipeline out-of-the-box:
 **The Stack:**
 *   **Frontend**: Next.js 14, React, Tailwind CSS, Lucide Icons (Premium UI Focus).
 *   **Backend Core**: NestJS, TypeScript, Prisma ORM.
-*   **Database**: PostgreSQL.
+*   **Database**: PostgreSQL via **Neon Serverless (WebSocket Adapter)** to bypass restrictive corporate/ISP TCP firewalls.
 *   **AI Engine**: Python, FastAPI, Pydantic, advanced heuristic ML models.
 *   **Integrations**: OpenWeatherMap (Mocked data streams), Razorpay UPI (Simulated callbacks).
 
@@ -63,6 +63,7 @@ We've integrated a sophisticated multi-rule fraud pipeline out-of-the-box:
 *   [x] **Phase 1**: Conceptualization, architecture mapping, robust AI engine (V2) deployment, Web App UI.
 *   [x] **Phase 2**: Full backend workflow integration, automated Cron triggers polling weather every 5 mins, zero-touch dynamic premium quotation system.
 *   [x] **Phase 3**: Integration of Razorpay Sandbox UPI payout simulation, advanced Insurer/Admin Dashboard (Loss Ratios, Predictive Claims next week), and cross-verification fraud flagging.
+*   [x] **Phase 4 (Infrastructure Polish)**: Network resilience! Migrated from standard TCP Postgres engines to Neon's WSS (WebSocket) Driver Adapter. This enables partners to run our entire stack locally over port 443, entirely bypassing ISP-level DPI and TCP port blocks (5432/26257). Also unified all environment variables to root for seamless mono-repo DX.
 
 ---
 
