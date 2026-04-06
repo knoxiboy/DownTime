@@ -1,6 +1,7 @@
 services:
   - type: web
     name: downtime-ai
+    plan: free
     env: python
     rootDir: ai-service
     buildCommand: pip install -r requirements.txt
