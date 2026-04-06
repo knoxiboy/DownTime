@@ -7,19 +7,24 @@ export class WorkerService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateWorkerDto) {
-    return this.prisma.worker.create({
-      data: {
-        name: dto.name,
-        phone: dto.phone,
-        city: dto.city,
-        zone: dto.zone,
-        platform: dto.platform,
-        dailyIncome: dto.dailyIncome,
-        workingHours: dto.workingHours ?? 8,
-        workStartHour: dto.workStartHour ?? 9,
-        workEndHour: dto.workEndHour ?? 19,
-      },
-    });
+    try {
+      return await this.prisma.worker.create({
+        data: {
+          name: dto.name,
+          phone: dto.phone,
+          city: dto.city,
+          zone: dto.zone,
+          platform: dto.platform,
+          dailyIncome: dto.dailyIncome,
+          workingHours: dto.workingHours ?? 8,
+          workStartHour: dto.workStartHour ?? 9,
+          workEndHour: dto.workEndHour ?? 19,
+        },
+      });
+    } catch (err: any) {
+      console.error('[WorkerService] Registration Error:', err.message, err.stack);
+      throw err;
+    }
   }
 
   async findById(id: string) {
