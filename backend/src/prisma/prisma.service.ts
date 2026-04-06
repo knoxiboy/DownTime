@@ -10,7 +10,7 @@ import { existsSync } from 'fs';
 neonConfig.webSocketConstructor = ws;
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService extends PrismaClient implements OnModuleInit {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
@@ -36,33 +36,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    // Neon serverless databases sleep after inactivity.
     this.logger.log('PrismaService initialized with Neon WebSocket adapter.');
-    this.warmUpDatabase();
-  }
-
-  async onModuleDestroy() {
-    await this.$disconnect();
-  }
-
-  /**
-   * Tries to wake up the Neon compute in the background without crashing the app.
-   */
-  private async warmUpDatabase(maxRetries = 10, delayMs = 3000): Promise<void> {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        await (this as any).$queryRaw`SELECT 1`;
-        this.logger.log(`✅ Neon Database is warm and connected over WebSockets! (attempt ${attempt})`);
-        return;
-      } catch (err: any) {
-        if (attempt < maxRetries) {
-          const wait = Math.min(delayMs * attempt, 15000);
-          this.logger.warn(`⏳ Waking up Neon... ${err.message}. Retrying in ${wait / 1000}s`);
-          await new Promise((r) => setTimeout(r, wait));
-        } else {
-          this.logger.error(`❌ Could not warm up database. Will connect on first API request.`);
-        }
-      }
-    }
+    // In a serverless environment like Vercel, we don't want to wait 30s to warm up if the 
+    // function only has 10s to execute. Connection will happen on first request.
   }
 }

@@ -1,10 +1,18 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 
+let cachedApp: any;
+
 export default async (req: any, res: any) => {
-  const app = await NestFactory.create(AppModule);
-  app.enableCors();
-  await app.init();
-  const instance = app.getHttpAdapter().getInstance();
+  if (!cachedApp) {
+    cachedApp = await NestFactory.create(AppModule);
+    cachedApp.enableCors({
+      origin: true,
+      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+      credentials: true,
+    });
+    await cachedApp.init();
+  }
+  const instance = cachedApp.getHttpAdapter().getInstance();
   instance(req, res);
 };
