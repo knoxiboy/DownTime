@@ -18,6 +18,11 @@ Build an AI-enabled **parametric insurance platform** that safeguards gig worker
 *   **Core Logic**: 100% automated coverage and payouts based on real-time triggers.
 *   **Business Model**: Simple **Weekly Pricing** model aligned with the worker's earnings cycle.
 
+### 5. SDLC, Security & Protection (Newly Integrated)
+* **Input Parsing:** Native NestJS `ValidationPipe` enabled globally with strict whitelist checking to sanitize all payloads.
+* **Basic Rate Limiting:** Integrated an in-memory IP tracker directly into the NestJS `main.ts` pipeline protecting against rapid-fire DDOS/brute-force attacks across all APIs.
+* **Architecture Integrity:** Environment separation enforced through `.env` configurations across all monorepo scopes.
+
 ---
 
 ## 🏆 The Golden Rules

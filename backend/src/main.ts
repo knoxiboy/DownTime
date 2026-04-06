@@ -14,6 +14,27 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Basic in-memory rate limiting middleware
+  const rateLimitMap = new Map<string, { count: number; startTime: number }>();
+  app.use((req: any, res: any, next: any) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    const now = Date.now();
+    if (!rateLimitMap.has(ip)) {
+      rateLimitMap.set(ip, { count: 1, startTime: now });
+      return next();
+    }
+    const record = rateLimitMap.get(ip)!;
+    if (now - record.startTime > 60000) {
+      rateLimitMap.set(ip, { count: 1, startTime: now });
+      return next();
+    }
+    if (record.count >= 100) {
+      return res.status(429).json({ message: 'Too many requests' });
+    }
+    record.count++;
+    next();
+  });
+
   // Enable validation pipes
   app.useGlobalPipes(
     new ValidationPipe({
