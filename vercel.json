@@ -1,4 +1,5 @@
 {
+  "comment": "This root vercel.json is intentionally minimal. Deploy each service separately from its own subdirectory.",
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/.next",
   "framework": "nextjs",
