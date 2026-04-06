@@ -7,7 +7,7 @@ import * as dotenv from 'dotenv';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
-neonConfig.webSocketConstructor = ws;
+neonConfig.webSocketConstructor = ws as any;
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {

@@ -4,10 +4,12 @@ const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  // In production browser, default to empty string so requests are relative to current domain
-  if (process.env.NODE_ENV === 'production' || (typeof window !== 'undefined' && window.location.hostname !== 'localhost')) {
-    return '';
+  
+  // Production fallback for our hackathon project
+  if (typeof window !== 'undefined' && window.location.hostname.includes('vercel.app')) {
+    return 'https://down-time-two.vercel.app';
   }
+  
   return 'http://localhost:3001';
 };
 
