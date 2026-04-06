@@ -171,8 +171,8 @@ const TRIGGER_LABELS: Record<string, string> = {
   HEAT_INDEX_DANGER: "🥵 Heat Index Danger",
 };
 
-// Seeded Worker ID for mock-auth
-const DEFAULT_WORKER_ID = "user-seed-123";
+// Seeded Worker ID for mock-auth reference only
+// const DEFAULT_WORKER_ID = "user-seed-123";
 
 export default function Home() {
   const [view, setView] = useState<"register" | "quote" | "success" | "dashboard" | "profile" | "admin">("register");
@@ -253,6 +253,17 @@ export default function Home() {
     } finally { setLoading(false); }
   };
 
+  const handleSignOut = () => {
+    localStorage.removeItem("downtime_worker_id");
+    setWorkerId(null);
+    setDashboardData(null);
+    setPremiumData(null);
+    setAdminData(null);
+    setRegName("");
+    setRegPhone("");
+    setView("register");
+  };
+
   // Fetch premium calculation
   useEffect(() => {
     if (view !== "quote") return;
@@ -271,8 +282,9 @@ export default function Home() {
   }, [dailyIncome, city, zone, coveragePct, view]);
 
   // Fetch dashboard data
-  const wid = workerId || DEFAULT_WORKER_ID;
   const fetchDashboard = async () => {
+    const wid = workerId;
+    if (!wid) return;
     setLoading(true);
     try {
       const response = await api.get(`/api/dashboard/worker/${wid}`);
@@ -740,7 +752,11 @@ export default function Home() {
           </div>
 
           <div className="pt-8 flex justify-center">
-            <Button variant="ghost" className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-2">
+            <Button 
+              variant="ghost" 
+              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 gap-2"
+              onClick={handleSignOut}
+            >
               <LogOut className="w-4 h-4" /> Sign Out
             </Button>
           </div>

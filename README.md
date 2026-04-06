@@ -1,117 +1,81 @@
 # DownTime: AI-Powered Income Protection for Delivery Partners
-### Guidewire DEVTrails 2026 Hackathon Submission
+### 🛡️ Guidewire DEVTrails 2026 Hackathon Submission (Phase 2)
 
 ---
 
-## 🚀 The Idea Document (Phase 1 Deliverable)
+## 🚀 Phase 2: Automation & Protection (Current)
+**Theme**: "Protect Your Worker"
+This phase is focused on the core automation of parametric insurance, from dynamic premium calculation to zero-touch claim processing for India's gig economy.
 
-### 1. The Requirement & Persona Scenarios
-India’s food and grocery (Q-Commerce) delivery partners are highly vulnerable to localized, uncontrollable environmental disruptions. Zomato, Swiggy, and Zepto delivery partners often lose 30-40% of their daily earnings when forced to stop work due to extreme weather, severe pollution, or natural disasters. 
+### 📍 The Problem We're Solving
+India’s platform-based delivery partners (Zomato, Swiggy, Zepto, Amazon, Dunzo etc.) are the backbone of our fast-paced digital economy. However, external disruptions such as extreme weather, pollution, and natural disasters can cause them to lose **20–30% of their monthly earnings**. 
 
-**Our Persona focus:** **Food & Q-Commerce Delivery Partners**.
-*   **The Persona**: **Ravi Kumar**, 26 yrs, Zepto Delivery Partner in Kondapur (Hyderabad).
-*   **The Scenario**: Ravi aims to work 10 hours daily to earn ₹700. Suddenly, a severe localized rainstorm combined with unexpected waterlogging floods the Kondapur delivery zone. The delivery platform suspends operations for his safety, preventing him from completing orders for 4 hours.
-*   **The Impact**: Ravi loses ~₹300 of his daily target, making it hard to pay for fuel and daily expenses. He has zero income safety net.
-*   **The DownTime Workflow**: Ravi subscribes to a DownTime Weekly Policy. When the rainstorm hits, DownTime's AI parametric sensors automatically detect the heavy rain and flood warnings in Kondapur. It calculates Ravi's lost hours and instantly triggers a Razorpay (UPI) payout directly to his bank account to cover the ₹300 loss. Total zero-touch claims processing. No forms, no wait times.
+When these disruptions occur, gig workers bear the full financial loss. **DownTime provides a safety net.**
 
-### 2. Weekly Premium Model & Parametric Triggers
-**The Weekly Premium Model:**
-Gig workers operate on a weekly payout cycle. Their cash flow doesn't permit hefty annual or monthly premiums. 
-*   Our pricing model strictly utilizes a **Weekly Basis** (`weeklyPremium`). 
-*   **Formula Calculation:** `Weekly Base Premium = (Daily Income × 7 × Coverage Choice) × AI_Risk_Multiplier × Seasonal_Adjustment`.
-*   A typical premium is highly affordable—roughly ₹40-₹60 per week to secure up to ₹3500+ of income. 
-*   If no claims are made this week, the AI predicts lower risk and offers a **No-Claim Discount** on the following week's premium.
-
-**Our Parametric Triggers (10+ Environmental Sensors):**
-Instead of just "rain", our platform monitors advanced factors using OpenWeatherMap/WAQI mock data:
-1.  **WIND_ADVISORY & HIGH_WIND** (Risk of accidents, flying debris)
-2.  **HEAVY_RAIN & TORRENTIAL_RAIN** (Waterlogging, impaired visibility)
-3.  **POOR_AIR_QUALITY & SEVERE_POLLUTION** (Health hazard, prevents outdoor work)
-4.  **EXTREME_HEAT & HEAT_INDEX_DANGER** (Heatstroke risk)
-5.  **LOW_VISIBILITY** (Fog, Smog)
-6.  **FLOOD_WARNING** (Impassable roads out of worker's control)
-7.  **CYCLONE_ALERT** (Complete platform shutdowns)
-
-**Platform Choice:** **Web Application (Responsive)**
-We chose a highly responsive Web App (PWA capabilities) instead of a Native Mobile App. 
-*   **Justification:** Delivery partners already have limited phone storage (running heavy delivery apps, WhatsApp, maps). A web platform ensures zero-friction onboarding, instant access via a browser link, no app updates required, and completely sidesteps the App Store/Play Store approval process—reducing our time-to-market.
-
-### 3. AI & ML Integration Plans (Premium & Fraud)
-**Dynamic AI Premium Calculation:**
-We built a robust Python FastAPI microservice that models 10 specific risk factors. Premium isn't static; it adapts to:
-*   **Weather Risk:** Hyper-local forecast data (Rain, Wind, AQI, Heat).
-*   **Location Risk:** The historical risk profile of the specific zone (e.g., Dharavi vs. Kondapur).
-*   **Seasonal Risk:** AI applies seasonal multipliers (monsoon vs. winter).
-*   **Time-of-Day Risk:** Higher premiums if the worker primarily operates during late-night hours.
-
-**Intelligent Fraud Detection (Phase 3 Implemented):**
-We've integrated a sophisticated multi-rule fraud pipeline out-of-the-box:
-*   *GPS Spoofing Check:* Detects impossible travel speeds between zones (Velocity validation).
-*   *External Ground Truth:* Compares the user-reported location against the actual API weather event bounds.
-*   *Temporal Rule Checks:* Prevents duplicate claims filed for the exact same disruption in a 24-hour window.
-
-### 4. Tech Stack & Development Plan
-
-**The Stack:**
-*   **Frontend**: Next.js 14, React, Tailwind CSS, Lucide Icons (Premium UI Focus).
-*   **Backend Core**: NestJS, TypeScript, Prisma ORM.
-*   **Database**: PostgreSQL via **Neon Serverless (WebSocket Adapter)** to bypass restrictive corporate/ISP TCP firewalls.
-*   **AI Engine**: Python, FastAPI, Pydantic, advanced heuristic ML models.
-*   **Integrations**: OpenWeatherMap (Mocked data streams), Razorpay UPI (Simulated callbacks).
-
-**Development Plan Overview (Phase 1-3 Achieved):**
-*   [x] **Phase 1**: Conceptualization, architecture mapping, robust AI engine (V2) deployment, Web App UI.
-*   [x] **Phase 2**: Full backend workflow integration, automated Cron triggers polling weather every 5 mins, zero-touch dynamic premium quotation system.
-*   [x] **Phase 3**: Integration of Razorpay Sandbox UPI payout simulation, advanced Insurer/Admin Dashboard (Loss Ratios, Predictive Claims next week), and cross-verification fraud flagging.
-*   [x] **Phase 4 (Infrastructure Polish)**: Network resilience! Migrated from standard TCP Postgres engines to Neon's WSS (WebSocket) Driver Adapter. This enables partners to run our entire stack locally over port 443, entirely bypassing ISP-level DPI and TCP port blocks (5432/26257). Also unified all environment variables to root for seamless mono-repo DX.
+### 🎯 The Challenge
+Build an AI-enabled **parametric insurance platform** that safeguards gig workers against income loss caused by environmental and social disruptions. 
+*   **Target Persona**: Food & Q-Commerce Delivery Partners (e.g., Zepto/Blinkit/Zomato).
+*   **Core Logic**: 100% automated coverage and payouts based on real-time triggers.
+*   **Business Model**: Simple **Weekly Pricing** model aligned with the worker's earnings cycle.
 
 ---
 
-## 🛠 Project Architecture
+## 🏆 The Golden Rules
+1.  **Persona Focus**: Specifically catering to Delivery Partners in the Food, E-commerce, or Grocery segments.
+2.  **Coverage Scope**: **LOSS OF INCOME ONLY**. We strictly exclude vehicle repairs, health insurance, or accident medical bills.
+3.  **Weekly Pricing**: All premiums and financial models are structured on a **Weekly basis** to match the gig economy cycle.
 
+---
+
+## 🛠 Project Architecture & Automation
+
+### 1. AI-Powered Risk Assessment
+*   **Dynamic Premium Calculation**: Our Python AI Service calculates the weekly premium based on hyper-local risk factors (Zone data, Seasonal adjustments).
+*   **Predictive Risk Modeling**: Uses historical weather and pollution data to adjust pricing (e.g., ₹2 less per week in historically safe zones).
+
+### 2. Parametric Automation (Phase 2 Implemented)
+*   **Real-time Sensor Monitoring**: Every 5 minutes, our system polls mock/real weather sensors for:
+    *   `HEAVY_RAIN` / `FLOOD_WARNING` (Waterlogging risk)
+    *   `EXTREME_HEAT` (Heatstroke/safety shutdowns)
+    *   `SEVERE_POLLUTION` (Air quality health hazards)
+*   **Auto-Claim Process**: When a threshold is met in a worker's active zone, a claim is **automatically initiated**. No forms, no evidence required from the worker.
+
+### 3. Intelligent Fraud Detection (Phase 3 Prep)
+*   Anomaly detection in claims.
+*   Location and activity validation (GPS spoofing checks).
+*   Duplicate claim prevention.
+
+---
+
+## 💻 Tech Stack
+*   **Frontend**: Next.js 14, React, Tailwind CSS (Modern Glassmorphic UI).
+*   **Backend**: NestJS, TypeScript, Prisma ORM.
+*   **Database**: PostgreSQL via **Neon Cloud** (WebSocket Adapter for network resilience).
+*   **AI Service**: Python FastAPI, GradientBoostingRegressor for risk modeling.
+*   **Deployment**: Vercel (Frontend/Backend) & Cloud-hosted AI Engine.
+
+---
+
+## 📂 Project Structure (Improved)
 ```text
-┌─────────────┐      ┌──────────────────┐      ┌──────────────────┐
-│   Next.js   │ ───► │   NestJS API     │ ───► │  FastAPI AI      │
-│  Dashboard  │      │   (Port 3001)    │      │  Risk Engine     │
-│ (Port 3000) │      │                  │      │  (Port 8000)     │
-└─────────────┘      │  ┌────────────┐  │      │                  │
-                     │  │  Prisma    │  │      │  10-Factor AI    │
-                     │  │  + Postgres│  │      │  Risk Evaluation │
-                     │  └────────────┘  │      └──────────────────┘
-                     │                  │              │
-                     │  Worker Mgmt     │      ┌───────┴────────┐
-                     │  Fraud Check     │      │ Public Weather/│
-                     │  Dashboard Stats │      │ Pollution APIs │
-                     └──────────────────┘      └────────────────┘
-                             │
-                     ┌───────┴────────┐
-                     │   Cron Jobs    │
-                     │  Poll Sensors  │
-                     │ Trigger Claims │
-                     │  UPI Payouts   │
-                     └────────────────┘
+DownTime/
+├── ai-service/        # Python FastAPI AI Engine (Risk & Fraud)
+├── backend/           # NestJS Backend API & Prisma Schema
+├── frontend/          # Next.js 14 Responsive Web App
+├── docs/              # Detailed Documentation & Strategy
+│   ├── db/            # Database Schema & init.sql
+│   ├── triggers.md    # Parametric Sensor Thresholds
+│   └── persona.md     # Targeted Worker Scenarios (Phase 1)
+└── README.md          # Current Project Status (Phase 2)
 ```
 
 ---
 
-## 🌐 Live Deployment & Vercel Setup
+## 🚦 Phase 2 Deliverables Achievement
+- [x] **Registration Process**: Optimized onboarding for delivery partners.
+- [x] **Insurance Policy Management**: Weekly lifecycle management.
+- [x] **Dynamic Premium Calculation**: AI-driven weekly pricing logic implemented.
+- [x] **Claims Management**: Fully automated parametric triggers (Loss of Income).
 
-Because DownTime uses a modern monorepo structure (Next.js frontend + NestJS/Prisma API + FastAPI), proper deployment to Vercel requires two separate projects to ensure independent scaling and proper API routing.
-
-### 1. Backend API Deployment
-1. Go to Vercel Dashboard -> Add New Project -> Import the DownTime GitHub repo.
-2. Name it `down-time-backend`.
-3. Set the **Root Directory** to `backend`.
-4. In Environment Variables, strictly add your Neon Postgres connection string:
-   - `DATABASE_URL`: `postgresql://[user]:[pass]@ep-...neon.tech/neondb?sslmode=require`
-5. Click **Deploy**. Copy the resulting Vercel URL (e.g., `https://down-time-backend.vercel.app`).
-
-### 2. Frontend App Deployment
-1. Go to Vercel Dashboard -> Add New Project -> Import the DownTime GitHub repo again.
-2. Name it `down-time-app`.
-3. Set the **Root Directory** to `frontend`.
-4. In Environment Variables, tell the frontend where to find the API:
-   - `NEXT_PUBLIC_API_URL`: Paste the backend URL from step 1 (e.g., `https://down-time-backend.vercel.app`).
-5. Click **Deploy**.
-
-> **Note**: Setting the Root Directory explicitly for each project forces Vercel to optimize the build process specifically for Next.js or NestJS without colliding configs. Defaulting `axios` configurations safely resolves proxy issues when pointing directly to your live backend domain.
+---
+*Created for the Guidewire DEVTrails 2026 Hackathon.*
