@@ -67,3 +67,8 @@ _agents/
 _agent/
 brain/
 tmp/
+
+# Local logs
+frontend/dev_out.txt
+*.txt
+
