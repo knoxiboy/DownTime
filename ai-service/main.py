@@ -691,13 +691,14 @@ async def ml_fraud_evaluate(req: MLFraudRequest):
     return result
 
 
-# Pre-train ML model on startup
+# Pre-train ML model on startup without blocking the server
 @app.on_event("startup")
 async def startup_train_model():
-    """Train ML model on server startup."""
-    print("[Startup] Training ML pricing model...")
-    pricing_model.train()
-    print("[Startup] ML model ready!")
+    import asyncio
+    print("[Startup] Submitting ML pricing model training to background thread...")
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(None, pricing_model.train)
+    print("[Startup] Server will boot now, training continues in background.")
 
 
 if __name__ == "__main__":
